@@ -4,10 +4,9 @@ compatibility_date = "2026-11-01"
 
 [vars]
 # Comma-separated list of sites that may call this API, e.g. "https://<user>.github.io". "*" allows any site.
-ALLOWED_ORIGINS = "*"
+ALLOWED_ORIGINS = "https://msk-imaging-and-novel-diagnostics.github.io"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "qmind"
-# Replace with the id printed by: npx wrangler d1 create qmind
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "af252671-f3b1-43a7-b85c-558f63da6c1f"

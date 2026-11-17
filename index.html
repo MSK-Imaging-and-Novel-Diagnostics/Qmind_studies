@@ -1333,7 +1333,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
 
   // ---------- Password and data ----------
   // Base URL of the Cloudflare Worker (see worker/). The data lives there, not in this file.
-  var API = "";
+  var API = "https://qmind-api.eddo-wesselink.workers.dev";
 
   var COLS = ["projects", "questions", "supervisors", "activity"];
   var key = recall("qmind-key") || "", started = false;

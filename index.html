@@ -1050,6 +1050,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
   function renderApplicants() {
     var list = $("q-applicants"); list.replaceChildren();
     dq.applicants.forEach(function (a) {
+      if (a.hidden) { list.append(h("li", null, h("b", { text: "Applicant" }), h("span", { "class": "who", text: day(a.at) }))); return; }
       list.append(h("li", null, h("b", { text: a.name || "" }), a.programme ? ", " + a.programme : "",
         h("span", { "class": "who", text: day(a.at) }), a.motivation ? String(a.motivation) : "",
         h("div", { "class": "acts" },
@@ -1196,7 +1197,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
       .concat([{ id: uid(), name: name, programme: $("a-programme").value.trim(), motivation: $("a-motivation").value.trim(), at: nowIso() }]);
     submit(ev.currentTarget, "a-err", async function () {
       await state.db.doc("questions/" + q.id).update({ applicants: list, updatedAt: nowIso() });
-      logAct(name + " applied for “" + clip(q.title, 70) + "”");
+      logAct("New application for “" + clip(q.title, 70) + "”");
     }, "dlg-apply");
   });
 
@@ -1321,7 +1322,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     sortQs(liveQs()).forEach(function (q) {
       out.push([qProjectNames(q), q.title, q.note, STATUS[statusOf(q)], q.level, PRIO[q.priority], EFFORT[q.effort], arr(q.tags).join(", "), q.assignee, q.supervisor,
         q.startDate, q.endDate, arr(q.vars).map(function (id) { return vm[id] && vm[id].name; }).filter(Boolean).join(", "), q.missing, checksDone(q) + "/3",
-        q.outcome, q.outputUrl, arr(q.applicants).map(function (a) { return a.name; }).join(", "),
+        q.outcome, q.outputUrl, arr(q.applicants).map(function (a) { return a.name; }).filter(Boolean).join(", "),
         arr(q.log).map(function (l) { return day(l.at) + ": " + l.text; }).join(" | "), day(q.createdAt), day(q.updatedAt)]);
     });
     var csv = "﻿" + out.map(function (r) { return r.map(csvCell).join(";"); }).join("\r\n");
@@ -1401,7 +1402,9 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     key = ""; try { localStorage.removeItem("qmind-key"); } catch (e) {}
     $("app").hidden = true; $("gate").hidden = false;
   }
-  function unlock(data) {
+  function unlock(r) {
+    var data = r.data, me = (r.viewer && r.viewer.name) || "";
+    state.myName = me; state.uid = me || null; if (me) state.names[me] = me;
     $("gate").hidden = true; $("app").hidden = false;
     apply(data);
     if (started) return;
@@ -1415,7 +1418,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
       var k = await sha256($("g-pass").value.trim());
       var r = await call("GET", "/api/data", undefined, k);
       key = k; remember("qmind-key", k); $("g-pass").value = "";
-      unlock(r.data);
+      unlock(r);
     } catch (e) {
       err.textContent = e && e.code === "unauthorized" ? "Incorrect password." : "Can't reach the database.";
       err.hidden = false; $("g-pass").select();
@@ -1424,7 +1427,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
   });
   if (key) {
     $("gate").hidden = true; $("app").hidden = false; render();
-    call("GET", "/api/data").then(function (r) { unlock(r.data); }, function (e) {
+    call("GET", "/api/data").then(function (r) { unlock(r); }, function (e) {
       if (e.code === "unauthorized") lock(); else { state.phase = "unavailable"; render(); }
     });
   }

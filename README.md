@@ -54,17 +54,25 @@ Push this repository to GitHub and turn on Pages (Settings, Pages, deploy from b
 QMIND_PASSWORD=... node tools/import.mjs qmind-dashboard.html https://qmind-api.<account>.workers.dev
 ```
 
-## Changing the password
+## Passwords
+
+There are two levels, both stored as Worker secrets:
+
+- `DASHBOARD_PASSWORD`: the shared password. Shows everything except who applied for a question; applicants appear as "Applicant" with a date.
+- `ADMIN_PASSWORDS`: a comma-separated list of personal passwords, each ending in `_FirstnameLastname`. These also show the applicants, and the name is used in the activity log.
+
+The names are removed by the API, so they never reach the browser of someone using the shared password.
 
 ```
 npx wrangler secret put DASHBOARD_PASSWORD
+npx wrangler secret put ADMIN_PASSWORDS
 ```
 
-Everyone has to enter the new password the next time they open the page.
+After a change, everyone has to enter their new password the next time they open the page.
 
 ## Testing locally
 
-Create `worker/.dev.vars` with `DASHBOARD_PASSWORD=something`, then in `worker/`:
+Create `worker/.dev.vars` with `DASHBOARD_PASSWORD=something` and `ADMIN_PASSWORDS=something_TestUser`, then in `worker/`:
 
 ```
 npx wrangler d1 execute qmind --local --file schema.sql

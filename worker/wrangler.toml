@@ -1,0 +1,13 @@
+name = "qmind-api"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
+
+[vars]
+# Comma-separated list of sites that may call this API, e.g. "https://<user>.github.io". "*" allows any site.
+ALLOWED_ORIGINS = "*"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "qmind"
+# Replace with the id printed by: npx wrangler d1 create qmind
+database_id = "00000000-0000-0000-0000-000000000000"

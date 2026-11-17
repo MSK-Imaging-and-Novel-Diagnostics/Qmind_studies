@@ -1,0 +1,1470 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<link rel="icon" href="qmind_icon.png">
+<title>Q-MIND research questions</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600&display=swap">
+<style>
+/* Layout: quiet sidebar (logo, views, projects) beside one wide reading column. Hairlines and type carry the structure; no cards, tiles or pills. */
+:root {
+  /* Q-MIND: petrol #09414E, orange #E97606, red #DD081A */
+  --bg: #ffffff;
+  --side: #f6f8f8;
+  --soft: #eef2f3;
+  --line: #e1e7e9;
+  --fg: #09414e;
+  --muted: #62797f;
+  --accent: #09414e;
+  --accent-fg: #ffffff;
+  --brand: #e97606;
+  --ok: #1a8a5f;
+  --warn: #c40717;
+  --plate: #ffffff;
+  --shadow: 0 18px 50px rgb(9 65 78 / 0.18);
+  --display: "Outfit", "Inter", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #071b21; --side: #0a232a; --soft: #0f2c35; --line: #1a3a44;
+    --fg: #e6eff1; --muted: #8fa9b0; --accent: #e6eff1; --accent-fg: #071b21;
+    --brand: #f08a24; --ok: #58c99c; --warn: #ff7d82; --plate: #ffffff;
+    --shadow: 0 18px 50px rgb(0 0 0 / 0.5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #071b21; --side: #0a232a; --soft: #0f2c35; --line: #1a3a44;
+  --fg: #e6eff1; --muted: #8fa9b0; --accent: #e6eff1; --accent-fg: #071b21;
+  --brand: #f08a24; --ok: #58c99c; --warn: #ff7d82; --plate: #ffffff;
+  --shadow: 0 18px 50px rgb(0 0 0 / 0.5);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+[hidden] { display: none !important; }
+img { max-width: 100%; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 14.5px; line-height: 1.55; }
+h1, h2, h3, p, ul { margin: 0; }
+h1 { font: 600 26px/1.15 var(--display); letter-spacing: -0.01em; text-wrap: balance; }
+h2 { font: 600 17px/1.3 var(--display); text-wrap: balance; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.num { font-variant-numeric: tabular-nums; }
+a { color: inherit; text-underline-offset: 3px; }
+
+/* Gate */
+.gate {
+  min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+  padding-block: 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.gate .logo { width: 168px; height: 168px; background: var(--plate); border-radius: 12px; padding: 8px; }
+.gate form { display: flex; gap: 8px; width: min(340px, 100%); }
+.gate p { max-width: 380px; text-align: center; overflow-wrap: anywhere; }
+.mail { color: var(--fg); user-select: all; }
+
+/* Shell */
+.shell { display: grid; grid-template-columns: 244px minmax(0, 1fr); min-height: 100%; }
+.side {
+  background: var(--side); border-right: 1px solid var(--line);
+  padding-block: 22px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 22px; min-width: 0;
+}
+.side .logo { width: 132px; height: 132px; background: var(--plate); border-radius: 10px; padding: 6px; align-self: flex-start; }
+.side .affil { font-size: 12px; line-height: 1.45; color: var(--muted); margin-top: auto; display: flex; gap: 10px; align-items: flex-start; }
+.side .affil img { width: 22px; height: 22px; flex: none; }
+.nav { display: flex; flex-direction: column; gap: 2px; }
+.navhead { font-size: 12px; color: var(--muted); padding: 14px 10px 4px; }
+.navitem {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+  font: 400 14px var(--body); color: var(--fg); text-align: left;
+  background: none; border: 0; border-radius: 6px; padding: 6px 10px; cursor: pointer; min-width: 0;
+}
+.navitem span:first-child { overflow-wrap: anywhere; }
+.navitem:hover { background: var(--soft); }
+.navitem[aria-current="page"] { background: var(--soft); font-weight: 600; }
+.navitem .n { font-size: 12.5px; color: var(--muted); font-weight: 400; font-variant-numeric: tabular-nums; }
+.navitem.add { color: var(--muted); }
+.main {
+  padding-block: 26px 72px;
+  padding-left: max(clamp(16px, 4vw, 48px), env(safe-area-inset-left, 0px));
+  padding-right: max(clamp(16px, 4vw, 48px), env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 26px; min-width: 0; max-width: 1040px;
+}
+@media (max-width: 820px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .side { border-right: 0; border-bottom: 1px solid var(--line); gap: 12px; }
+  .side .logo { width: 84px; height: 84px; }
+  .side .affil { margin-top: 0; }
+  .nav { flex-direction: row; flex-wrap: wrap; }
+  .navhead { width: 100%; padding-top: 6px; }
+}
+
+.topbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.topbar input { flex: 1 1 240px; min-width: 0; }
+.notice { border-left: 2px solid var(--brand); padding: 2px 0 2px 12px; font-size: 14px; }
+
+/* Controls */
+button { font-family: var(--body); }
+.btn {
+  font: 500 13.5px var(--body); color: var(--fg); background: transparent;
+  border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer; white-space: nowrap;
+}
+.btn:hover { border-color: var(--muted); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.btn.danger { color: var(--warn); }
+.tbtn { font: 500 13px var(--body); color: var(--muted); background: none; border: 0; padding: 0; cursor: pointer; }
+.tbtn:hover { color: var(--fg); text-decoration: underline; text-underline-offset: 3px; }
+.tbtn.danger:hover { color: var(--warn); }
+.acts { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; }
+:is(button, input, textarea, select, a):focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+input[type="text"], input[type="search"], input[type="password"], input[type="date"], input[type="number"], textarea, select {
+  font: 400 14.5px/1.5 var(--body); color: var(--fg); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; width: 100%; min-width: 0;
+}
+textarea { resize: vertical; min-height: 60px; }
+select.inline { width: auto; padding: 4px 8px; font-size: 13px; }
+
+/* View */
+.view { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
+.vhead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 10px 20px; }
+.sec { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.sechead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+.subtabs { display: flex; gap: 22px; border-bottom: 1px solid var(--line); }
+.subtab { font: 500 14px var(--body); color: var(--muted); background: none; border: 0; border-bottom: 2px solid transparent; padding: 0 0 9px; margin-bottom: -1px; cursor: pointer; }
+.subtab[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--brand); }
+.filters { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: center; }
+.filter { font: 400 13.5px var(--body); color: var(--muted); background: none; border: 0; padding: 0; cursor: pointer; }
+.filter[aria-pressed="true"] { color: var(--fg); font-weight: 600; }
+.empty { color: var(--muted); padding: 18px 0; border-top: 1px solid var(--line); }
+.prose { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 68ch; }
+
+.figs { display: flex; flex-wrap: wrap; gap: 14px 56px; }
+.fig { display: flex; flex-direction: column; }
+.fig b { font: 500 40px/1 var(--display); font-variant-numeric: tabular-nums; }
+.fig span { font-size: 13px; color: var(--muted); display: inline-flex; align-items: center; gap: 7px; margin-top: 6px; }
+
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; display: inline-block; }
+.dot.open, .bar .open { background: var(--ok); }
+.dot.toegewezen, .bar .toegewezen { background: var(--brand); }
+.dot.afgerond, .bar .afgerond { background: var(--muted); }
+.st { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); white-space: nowrap; }
+.bar { display: flex; gap: 2px; height: 6px; border-radius: 3px; overflow: hidden; background: var(--soft); min-width: 60px; }
+.bar span { display: block; height: 100%; }
+
+.tblwrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-weight: 500; font-size: 12.5px; color: var(--muted); padding: 0 16px 8px 0; white-space: nowrap; }
+td { padding: 10px 16px 10px 0; border-top: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
+th:last-child, td:last-child { padding-right: 0; }
+td.r, th.r { text-align: right; }
+table.facts { width: auto; max-width: 68ch; }
+table.facts th { padding: 8px 24px 8px 0; border-top: 1px solid var(--line); vertical-align: top; font-size: 13px; }
+table.facts td { padding: 8px 0; }
+tr.click { cursor: pointer; }
+tr.click:hover td { background: var(--side); }
+
+/* Question rows */
+.rows { display: flex; flex-direction: column; }
+.row { display: flex; flex-direction: column; gap: 5px; padding: 16px 0; border-top: 1px solid var(--line); min-width: 0; }
+.rowtop { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+.row .title { font-weight: 600; font-size: 15.5px; line-height: 1.4; overflow-wrap: anywhere; }
+.row.afgerond .title { font-weight: 500; }
+.row .desc { color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; max-width: 72ch; }
+.row .meta { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.row .flags { font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 2px 16px; overflow-wrap: anywhere; }
+.flags .warn { color: var(--warn); }
+.row .out { font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; max-width: 72ch; }
+.row .acts { margin-top: 4px; }
+
+/* Timeline */
+.tl { display: flex; flex-direction: column; }
+.trow { display: grid; grid-template-columns: minmax(0, 240px) minmax(0, 1fr); gap: 6px 20px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+.trow.axis { border-top: 0; padding: 0 0 6px; font-size: 12px; color: var(--muted); }
+.taxis { display: flex; justify-content: space-between; }
+.tlabel { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; }
+.tlabel b { font-weight: 600; }
+.track { position: relative; height: 14px; background: var(--soft); border-radius: 3px; }
+.track .span { position: absolute; top: 3px; bottom: 3px; background: var(--brand); border-radius: 2px; min-width: 3px; }
+.track .now { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--fg); }
+@media (max-width: 560px) { .trow { grid-template-columns: minmax(0, 1fr); } }
+
+/* Dialogs */
+dialog {
+  width: min(640px, calc(100vw - 32px)); max-height: calc(100% - 32px);
+  background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 0; box-shadow: var(--shadow);
+}
+dialog.narrow { width: min(440px, calc(100vw - 32px)); }
+dialog::backdrop { background: rgb(4 20 25 / 0.45); }
+.dbody { display: flex; flex-direction: column; gap: 14px; padding: 22px; }
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.field label, .grp { font-size: 13px; font-weight: 500; color: var(--muted); }
+.grp { border-top: 1px solid var(--line); padding-top: 14px; color: var(--fg); font-weight: 600; }
+.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.cols.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 520px) { .cols, .cols.three { grid-template-columns: minmax(0, 1fr); } }
+.checks { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.chk { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; overflow-wrap: anywhere; }
+.dacts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.dacts .spacer { flex: 1; }
+.err { color: var(--warn); font-size: 13.5px; }
+.list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; }
+.list li { font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.list time, .list .who { display: block; font-size: 12.5px; color: var(--muted); }
+.sug { display: flex; flex-direction: column; gap: 4px; padding: 12px 0; border-top: 1px solid var(--line); }
+.sug b { font-weight: 600; overflow-wrap: anywhere; }
+.proposal { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 52vh; overflow-y: auto; font-size: 14.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<section class="gate" id="gate">
+  <img class="logo" src="qmind_logo.png" alt="Q-MIND, Quantitative Musculoskeletal Imaging and Novel Diagnostics">
+  <form id="form-gate">
+    <input type="password" id="g-pass" required autocomplete="current-password" placeholder="Password" aria-label="Password">
+    <button type="submit" class="btn primary">Open</button>
+  </form>
+  <p class="err" id="g-err" hidden></p>
+  <p class="muted small">Request the password from <span class="mail">e.o.wesselink@amsterdamumc.nl</span> or <span class="mail">k.m.beekman@amsterdamumc.nl</span>.</p>
+  <p class="muted small">Amsterdam UMC, Department of Radiology and Nuclear Medicine</p>
+</section>
+
+<div class="shell" id="app" hidden>
+  <aside class="side">
+    <img class="logo" src="qmind_logo.png" alt="Q-MIND, Quantitative Musculoskeletal Imaging and Novel Diagnostics">
+    <nav class="nav" id="nav" aria-label="Views"></nav>
+    <p class="affil"><img src="qmind_icon.png" alt=""><span>Amsterdam UMC<br>Department of Radiology and Nuclear Medicine</span></p>
+  </aside>
+  <div class="main">
+    <div class="topbar">
+      <input type="search" id="search" placeholder="Search" aria-label="Search">
+      <button type="button" class="btn" id="btn-export" hidden>Export CSV</button>
+    </div>
+    <p class="notice" id="notice" hidden></p>
+    <main id="detail"></main>
+  </div>
+</div>
+
+<dialog id="dlg-project" class="narrow" aria-labelledby="dp-h">
+  <form class="dbody" id="form-project">
+    <h2 id="dp-h">Project</h2>
+    <div class="field"><label for="p-name">Name</label><input type="text" id="p-name" required maxlength="80" autocomplete="off"></div>
+    <div class="field"><label for="p-dataset">Dataset description</label><textarea id="p-dataset" rows="7"></textarea></div>
+    <div class="field"><label for="p-collab">Primary collaborators (one per line)</label><textarea id="p-collab" rows="3"></textarea></div>
+    <div class="field"><label for="p-owner">Data owner</label><input type="text" id="p-owner" maxlength="200" autocomplete="off"></div>
+    <div class="field"><label for="p-url">Primary article (link or DOI)</label><input type="text" id="p-url" maxlength="300" autocomplete="off"></div>
+    <div class="field"><label for="p-urllabel">Link text</label><input type="text" id="p-urllabel" maxlength="80" autocomplete="off" placeholder="Study protocol"></div>
+    <p class="err" id="p-err" hidden></p>
+    <div class="dacts"><button type="submit" class="btn primary">Save</button><button type="button" class="btn" data-close>Cancel</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-section" class="narrow" aria-labelledby="ds-h">
+  <form class="dbody" id="form-section">
+    <h2 id="ds-h">Text block</h2>
+    <div class="field"><label for="s-title">Heading</label><input type="text" id="s-title" required maxlength="80" autocomplete="off"></div>
+    <div class="field"><label for="s-body">Text</label><textarea id="s-body" rows="8"></textarea></div>
+    <p class="err" id="s-err" hidden></p>
+    <div class="dacts"><button type="submit" class="btn primary">Save</button><button type="button" class="btn" data-close>Cancel</button><span class="spacer"></span><button type="button" class="tbtn danger" id="s-delete">Delete</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-variable" class="narrow" aria-labelledby="dv-h">
+  <form class="dbody" id="form-variable">
+    <h2 id="dv-h">Variable</h2>
+    <div class="field"><label for="v-name">Name</label><input type="text" id="v-name" required maxlength="120" autocomplete="off"></div>
+    <div class="field"><label for="v-modality">Modality / type</label><input type="text" id="v-modality" maxlength="80" autocomplete="off" list="names-modality"></div>
+    <div class="cols">
+      <div class="field"><label for="v-time">Timepoints</label><input type="text" id="v-time" maxlength="80" autocomplete="off"></div>
+      <div class="field"><label for="v-n">N</label><input type="text" id="v-n" maxlength="20" autocomplete="off" inputmode="numeric"></div>
+    </div>
+    <datalist id="names-modality"></datalist>
+    <p class="err" id="v-err" hidden></p>
+    <div class="dacts"><button type="submit" class="btn primary">Save</button><button type="button" class="btn" data-close>Cancel</button><span class="spacer"></span><button type="button" class="tbtn danger" id="v-delete">Delete</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-study" class="narrow" aria-labelledby="dt-h">
+  <form class="dbody" id="form-study">
+    <h2 id="dt-h">Related study</h2>
+    <div class="field"><label for="t-title">Title</label><textarea id="t-title" rows="2" required maxlength="400"></textarea></div>
+    <div class="field"><label for="t-authors">Authors</label><input type="text" id="t-authors" maxlength="300" autocomplete="off"></div>
+    <div class="cols">
+      <div class="field"><label for="t-journal">Journal</label><input type="text" id="t-journal" maxlength="160" autocomplete="off"></div>
+      <div class="field"><label for="t-year">Year</label><input type="text" id="t-year" maxlength="4" autocomplete="off" inputmode="numeric"></div>
+    </div>
+    <div class="field"><label for="t-url">Link or DOI</label><input type="text" id="t-url" maxlength="300" autocomplete="off"></div>
+    <div class="field"><label for="t-note">Summary</label><textarea id="t-note" rows="3"></textarea></div>
+    <p class="err" id="t-err" hidden></p>
+    <div class="dacts"><button type="submit" class="btn primary">Save</button><button type="button" class="btn" data-close>Cancel</button><span class="spacer"></span><button type="button" class="tbtn danger" id="t-delete">Delete</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-question" aria-labelledby="dq-h">
+  <form class="dbody" id="form-question">
+    <h2 id="dq-h">Question</h2>
+    <div class="field"><label for="q-title">Research question</label><textarea id="q-title" rows="2" required maxlength="400"></textarea></div>
+    <p class="small muted" id="q-similar" hidden></p>
+    <div class="field"><label for="q-note">Description</label><textarea id="q-note" rows="3"></textarea></div>
+
+    <p class="grp">Planning</p>
+    <div class="cols three">
+      <div class="field"><label for="q-status">Status</label>
+        <select id="q-status"><option value="open">Open</option><option value="toegewezen">Assigned</option><option value="afgerond">Completed</option></select></div>
+      <div class="field"><label for="q-assignee">Assigned to</label><input type="text" id="q-assignee" maxlength="80" autocomplete="off" list="names-assignee"></div>
+      <div class="field"><label for="q-supervisor">Supervisor / PI</label><input type="text" id="q-supervisor" required maxlength="80" autocomplete="off" list="names-supervisor"></div>
+    </div>
+    <div class="cols three">
+      <div class="field"><label for="q-start">Start</label><input type="date" id="q-start"></div>
+      <div class="field"><label for="q-end">End</label><input type="date" id="q-end"></div>
+      <div class="field"><label for="q-level">Level</label>
+        <select id="q-level"><option value="">Not set</option><option>Bachelor</option><option>Master</option><option>PhD</option><option>Other</option></select></div>
+    </div>
+    <div class="cols three">
+      <div class="field"><label for="q-priority">Priority</label>
+        <select id="q-priority"><option value="">Not set</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+      <div class="field"><label for="q-effort">Effort</label>
+        <select id="q-effort"><option value="">Not set</option><option value="S">Small</option><option value="M">Medium</option><option value="L">Large</option></select></div>
+      <div class="field"><label for="q-tags">Tags (comma separated)</label><input type="text" id="q-tags" maxlength="200" autocomplete="off"></div>
+    </div>
+    <datalist id="names-assignee"></datalist>
+    <datalist id="names-supervisor"></datalist>
+
+    <p class="grp">Data</p>
+    <div class="field" id="q-also-field"><label>Also uses</label><div class="checks" id="q-also"></div></div>
+    <div class="field"><label>Variables needed</label><div class="checks" id="q-vars"></div></div>
+    <div class="field"><label for="q-missing">Data needed but not available</label><input type="text" id="q-missing" maxlength="200" autocomplete="off"></div>
+
+    <p class="grp">Prerequisites</p>
+    <div class="checks">
+      <label class="chk"><input type="checkbox" id="q-c-ethics"> Ethics approval covers this</label>
+      <label class="chk"><input type="checkbox" id="q-c-access"> Data access arranged</label>
+      <label class="chk"><input type="checkbox" id="q-c-agreement"> Data agreement signed</label>
+    </div>
+
+    <div class="dbody" id="grp-outcome" style="padding:0" hidden>
+      <p class="grp">Outcome</p>
+      <div class="field"><label for="q-outcome">Findings</label><textarea id="q-outcome" rows="3"></textarea></div>
+      <div class="field"><label for="q-url">Thesis, abstract or DOI</label><input type="text" id="q-url" maxlength="300" autocomplete="off"></div>
+    </div>
+
+    <div class="dbody" id="grp-applicants" style="padding:0" hidden>
+      <p class="grp">Applicants</p>
+      <ul class="list" id="q-applicants"></ul>
+    </div>
+
+    <p class="grp">Notes</p>
+    <ul class="list" id="q-log" hidden></ul>
+    <div class="field"><label for="q-newnote">Add note</label><textarea id="q-newnote" rows="2"></textarea></div>
+
+    <p class="err" id="q-err" hidden></p>
+    <div class="dacts">
+      <button type="submit" class="btn primary">Save</button><button type="button" class="btn" data-close>Cancel</button>
+      <button type="button" class="tbtn" id="q-overlap" hidden>Check overlap</button>
+      <span class="spacer"></span><button type="button" class="tbtn danger" id="q-delete">Delete</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-apply" class="narrow" aria-labelledby="da-h">
+  <form class="dbody" id="form-apply">
+    <h2 id="da-h">Apply</h2>
+    <p class="small muted" id="a-title"></p>
+    <div class="field"><label for="a-name">Name</label><input type="text" id="a-name" required maxlength="80" autocomplete="off"></div>
+    <div class="field"><label for="a-programme">Programme</label><input type="text" id="a-programme" maxlength="120" autocomplete="off"></div>
+    <div class="field"><label for="a-motivation">Motivation</label><textarea id="a-motivation" rows="4"></textarea></div>
+    <p class="err" id="a-err" hidden></p>
+    <div class="dacts"><button type="submit" class="btn primary">Apply</button><button type="button" class="btn" data-close>Cancel</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-sup" class="narrow" aria-labelledby="du-h">
+  <form class="dbody" id="form-sup">
+    <h2 id="du-h">Supervisor</h2>
+    <div class="field"><label for="u-name">Name</label><input type="text" id="u-name" required maxlength="80" autocomplete="off"></div>
+    <div class="field"><label for="u-cap">Maximum students at a time</label><input type="number" id="u-cap" min="0" max="50" step="1"></div>
+    <p class="err" id="u-err" hidden></p>
+    <div class="dacts"><button type="submit" class="btn primary">Save</button><button type="button" class="btn" data-close>Cancel</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlg-suggest" aria-labelledby="dg-h">
+  <div class="dbody">
+    <h2 id="dg-h">Suggested questions</h2>
+    <p class="muted small" id="sg-status"></p>
+    <div id="sg-list"></div>
+    <div class="dacts"><button type="button" class="btn" id="sg-stop" hidden>Stop</button><button type="button" class="btn" id="sg-again" hidden>New suggestions</button><span class="spacer"></span><button type="button" class="btn" data-close>Close</button></div>
+  </div>
+</dialog>
+
+<dialog id="dlg-proposal" aria-labelledby="dr-h">
+  <div class="dbody">
+    <h2 id="dr-h">Project proposal</h2>
+    <p class="muted small" id="pr-status"></p>
+    <div class="proposal" id="pr-text"></div>
+    <div class="dacts">
+      <button type="button" class="btn primary" id="pr-save" hidden>Save to question</button>
+      <button type="button" class="btn" id="pr-copy" hidden>Copy</button>
+      <button type="button" class="btn" id="pr-download" hidden>Download</button>
+      <button type="button" class="btn" id="pr-stop" hidden>Stop</button>
+      <button type="button" class="btn" id="pr-again" hidden>Regenerate</button>
+      <span class="spacer"></span><button type="button" class="btn" data-close>Close</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dlg-confirm" class="narrow" aria-labelledby="c-text">
+  <div class="dbody">
+    <p id="c-text"></p>
+    <p class="err" id="c-err" hidden></p>
+    <div class="dacts"><button type="button" class="btn danger" id="c-ok">Delete</button><button type="button" class="btn" data-close>Cancel</button></div>
+  </div>
+</dialog>
+
+<script>
+(function () {
+  "use strict";
+  var STATUS = { open: "Open", toegewezen: "Assigned", afgerond: "Completed" };
+  var KEYS = ["open", "toegewezen", "afgerond"];
+  var ORDER = { open: 0, toegewezen: 1, afgerond: 2 };
+  var PRIO = { high: "High", medium: "Medium", low: "Low" };
+  var PRANK = { high: 0, medium: 1, "": 2, low: 3 };
+  var EFFORT = { S: "Small", M: "Medium", L: "Large" };
+  var VIEWS = { overview: "Overview", open: "Open questions", outcomes: "Outcomes", people: "People", activity: "Activity" };
+  var state = {
+    db: null, user: null, sample: null, downloads: null, uid: null, myName: "",
+    phase: "loading", projects: [], questions: [], sups: [], activity: {}, names: {},
+    gotP: false, gotQ: false, view: "overview", ptab: "questions", filter: "alle", tag: "", query: "",
+    readonly: false, slow: false, flash: ""
+  };
+  var $ = function (id) { return document.getElementById(id); };
+
+  function h(tag, attrs) {
+    var el = document.createElement(tag);
+    for (var k in attrs || {}) {
+      var v = attrs[k];
+      if (v == null || v === false) continue;
+      if (k === "text") el.textContent = v;
+      else if (k.slice(0, 2) === "on") el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (var i = 2; i < arguments.length; i++) add(el, arguments[i]);
+    return el;
+  }
+  function add(el, c) {
+    if (c == null || c === false) return;
+    if (Array.isArray(c)) c.forEach(function (x) { add(el, x); });
+    else el.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+  }
+  function tbtn(label, fn, cls) { return h("button", { type: "button", "class": "tbtn" + (cls ? " " + cls : ""), onclick: fn }, label); }
+  function remember(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function recall(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function nowIso() { return new Date().toISOString(); }
+  function today() { return nowIso().slice(0, 10); }
+  function uid() { return Math.random().toString(36).slice(2, 10); }
+  function day(iso) {
+    if (!iso) return "";
+    var d = new Date(iso);
+    return isNaN(d) ? "" : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  }
+  function daysSince(iso) { var t = Date.parse(iso); return isNaN(t) ? 0 : Math.floor((Date.now() - t) / 864e5); }
+  function plural(n, one, many) { return n + " " + (n === 1 ? one : many); }
+  function clip(s, n) { s = String(s || ""); return s.length > n ? s.slice(0, n - 1) + "…" : s; }
+  function arr(x) { return Array.isArray(x) ? x : []; }
+
+  function statusOf(q) { return STATUS[q.status] ? q.status : "open"; }
+  function projectById(id) { return state.projects.find(function (p) { return p.id === id; }); }
+  function questionById(id) { return state.questions.find(function (q) { return q.id === id; }); }
+  function qProjectIds(q) {
+    var ids = [q.projectId].concat(arr(q.projectIds));
+    return ids.filter(function (id, i) { return projectById(id) && ids.indexOf(id) === i; });
+  }
+  function qProjectNames(q) { return qProjectIds(q).map(function (id) { return projectById(id).name || "Untitled"; }).join(" + "); }
+  function questionsOf(pid) { return state.questions.filter(function (q) { return qProjectIds(q).indexOf(pid) !== -1; }); }
+  function liveQs() { return state.questions.filter(function (q) { return qProjectIds(q).length; }); }
+  function countBy(qs) { var c = { open: 0, toegewezen: 0, afgerond: 0 }; qs.forEach(function (q) { c[statusOf(q)]++; }); return c; }
+  function sortQs(qs) {
+    return qs.slice().sort(function (a, b) {
+      return (ORDER[statusOf(a)] - ORDER[statusOf(b)]) || (PRANK[a.priority || ""] - PRANK[b.priority || ""]) ||
+        String(a.createdAt || "").localeCompare(String(b.createdAt || ""));
+    });
+  }
+  function varMap() {
+    var m = {};
+    state.projects.forEach(function (p) { arr(p.variables).forEach(function (v) { m[v.id] = v; }); });
+    return m;
+  }
+  function allTags() {
+    var t = {};
+    liveQs().forEach(function (q) { arr(q.tags).forEach(function (x) { t[x] = 1; }); });
+    return Object.keys(t).sort();
+  }
+  function lastTouch(q) {
+    var log = arr(q.log), last = log.length ? log[log.length - 1].at : "";
+    return String(q.updatedAt || q.createdAt || "") > String(last) ? (q.updatedAt || q.createdAt) : last;
+  }
+  function checksDone(q) { var c = q.checks || {}; return (c.ethics ? 1 : 0) + (c.access ? 1 : 0) + (c.agreement ? 1 : 0); }
+  function flagsOf(q) {
+    var f = [], s = statusOf(q);
+    if (s === "afgerond") return f;
+    if (q.endDate && q.endDate < today()) f.push({ t: "Overdue since " + day(q.endDate), warn: 1 });
+    if (s === "toegewezen") {
+      var d = daysSince(lastTouch(q));
+      if (d >= 21) f.push({ t: "No update for " + Math.floor(d / 7) + " wk", warn: 1 });
+    }
+    if (q.missing) f.push({ t: "Data gap: " + q.missing, warn: 1 });
+    var n = checksDone(q);
+    if (s === "toegewezen" || n) f.push({ t: "Prerequisites " + n + "/3", warn: s === "toegewezen" && n < 3 });
+    var a = arr(q.applicants).length;
+    if (a && s === "open") f.push({ t: plural(a, "applicant", "applicants") });
+    return f;
+  }
+  function linkFor(u) {
+    u = String(u || "").trim();
+    if (/^https?:\/\//i.test(u)) return u;
+    if (/^10\.\d{4,9}\/\S+$/.test(u)) return "https://doi.org/" + u;
+    return null;
+  }
+  function supNames() {
+    var m = {};
+    liveQs().forEach(function (q) { if (q.supervisor) m[q.supervisor.toLowerCase()] = q.supervisor; });
+    state.sups.forEach(function (s) { if (s.name && !m[s.name.toLowerCase()]) m[s.name.toLowerCase()] = s.name; });
+    return Object.keys(m).sort().map(function (k) { return m[k]; });
+  }
+  function supDoc(name) { return state.sups.find(function (s) { return String(s.name || "").toLowerCase() === String(name).toLowerCase(); }); }
+  function supLoad(name) {
+    var c = { open: 0, toegewezen: 0, afgerond: 0 };
+    liveQs().forEach(function (q) { if (String(q.supervisor || "").toLowerCase() === name.toLowerCase()) c[statusOf(q)]++; });
+    var d = supDoc(name), cap = d && d.capacity != null && d.capacity !== "" ? Number(d.capacity) : null;
+    return { c: c, cap: cap, full: cap != null && c.toegewezen >= cap };
+  }
+  function go(view) { state.view = view; state.query = ""; $("search").value = ""; state.filter = "alle"; state.tag = ""; remember("qmind-view", view); render(); }
+
+  // ---------- Render ----------
+  function render() {
+    if (!VIEWS[state.view] && !projectById(state.view)) state.view = "overview";
+    var nav = $("nav"); nav.replaceChildren();
+    var ready = state.phase === "ready";
+    var openN = countBy(liveQs()).open;
+    Object.keys(VIEWS).forEach(function (v) {
+      nav.append(h("button", { type: "button", "class": "navitem", "aria-current": state.view === v && !state.query ? "page" : null, onclick: function () { go(v); } },
+        h("span", { text: VIEWS[v] }), v === "open" && ready ? h("span", { "class": "n", text: String(openN) }) : null));
+    });
+    nav.append(h("span", { "class": "navhead", text: "Projects" }));
+    state.projects.forEach(function (p) {
+      nav.append(h("button", { type: "button", "class": "navitem", "aria-current": state.view === p.id && !state.query ? "page" : null, onclick: function () { go(p.id); } },
+        h("span", { text: p.name || "Untitled" }), h("span", { "class": "n", text: String(countBy(questionsOf(p.id)).open) })));
+    });
+    if (ready && !state.readonly) nav.append(h("button", { type: "button", "class": "navitem add", onclick: function () { openProject(null); } }, h("span", { text: "Add project" })));
+
+    var msg = "";
+    if (state.phase === "unavailable") msg = "Can't reach the database.";
+    else if (state.flash) msg = state.flash;
+    else if (state.slow) msg = "Can't reach the data yet. What you see may be out of date.";
+    else if (state.readonly && ready) msg = "Read-only.";
+    $("notice").textContent = msg; $("notice").hidden = !msg;
+    $("btn-export").hidden = !(state.downloads && ready && state.questions.length);
+
+    var d = $("detail"); d.replaceChildren();
+    if (state.phase === "loading") { d.append(h("p", { "class": "muted", text: "Loading…" })); return; }
+    if (state.phase === "unavailable") return;
+    if (state.query) d.append(viewSearch());
+    else if (state.view === "overview") d.append(viewOverview());
+    else if (state.view === "open") d.append(viewOpen());
+    else if (state.view === "outcomes") d.append(viewOutcomes());
+    else if (state.view === "people") d.append(viewPeople());
+    else if (state.view === "activity") d.append(viewActivity());
+    else d.append(viewProject(projectById(state.view)));
+  }
+  function view(title, right) {
+    return h("div", { "class": "view" }, h("div", { "class": "vhead" }, h("h1", { text: title }), right ? h("div", { "class": "acts" }, right) : null),
+      Array.prototype.slice.call(arguments, 2));
+  }
+  function sec(title, right) {
+    return h("section", { "class": "sec" }, h("div", { "class": "sechead" }, h("h2", { text: title }), right || null), Array.prototype.slice.call(arguments, 2));
+  }
+  function bar(c) {
+    var total = c.open + c.toegewezen + c.afgerond;
+    var el = h("div", { "class": "bar", role: "img", "aria-label": c.open + " open, " + c.toegewezen + " assigned, " + c.afgerond + " completed" });
+    if (total) KEYS.forEach(function (k) { if (c[k]) { var s = h("span", { "class": k }); s.style.width = (c[k] / total * 100) + "%"; el.append(s); } });
+    return el;
+  }
+  function rows(qs, showProject, emptyText) {
+    return qs.length ? h("div", { "class": "rows" }, qs.map(function (q) { return qRow(q, showProject); })) : h("p", { "class": "empty", text: emptyText });
+  }
+
+  function qRow(q, showProject) {
+    var s = statusOf(q), ro = state.readonly, vm = varMap();
+    var meta = [];
+    if (showProject || qProjectIds(q).length > 1) meta.push(qProjectNames(q));
+    meta.push(q.assignee ? "Assigned to " + q.assignee : "Unassigned");
+    if (q.supervisor) meta.push("Supervisor " + q.supervisor);
+    if (q.level) meta.push(q.level);
+    if (PRIO[q.priority]) meta.push(PRIO[q.priority] + " priority");
+    if (EFFORT[q.effort]) meta.push(EFFORT[q.effort] + " effort");
+    if (q.startDate || q.endDate) meta.push((day(q.startDate) || "?") + " – " + (day(q.endDate) || "?"));
+    arr(q.tags).forEach(function (t) { meta.push("#" + t); });
+    var vars = arr(q.vars).map(function (id) { return vm[id] && vm[id].name; }).filter(Boolean);
+    var flags = flagsOf(q), log = arr(q.log), last = log[log.length - 1], url = linkFor(q.outputUrl);
+    var acts = [];
+    if (!ro) {
+      if (s === "open") {
+        acts.push(tbtn("Apply", function () { openApply(q); }));
+        acts.push(tbtn("Assign", function () { openQuestion(q, { focus: "q-assignee" }); }));
+      }
+      if (s === "toegewezen") {
+        acts.push(tbtn("Complete", function () { openQuestion(q, { status: "afgerond", focus: "q-outcome" }); }));
+        acts.push(tbtn("Release", function () { patchQuestion(q.id, { status: "open", assignee: "" }, "Released “" + clip(q.title, 70) + "”"); }));
+        acts.push(tbtn("Note", function () { openQuestion(q, { focus: "q-newnote" }); }));
+      }
+      if (s === "afgerond") acts.push(tbtn("Reopen", function () { patchQuestion(q.id, { status: q.assignee ? "toegewezen" : "open" }, "Reopened “" + clip(q.title, 70) + "”"); }));
+      if (state.sample || q.proposal) acts.push(tbtn("Proposal", function () { openProposal(q); }));
+      acts.push(tbtn("Edit", function () { openQuestion(q); }));
+    } else if (q.proposal) acts.push(tbtn("Proposal", function () { openProposal(q); }));
+    return h("article", { "class": "row " + s },
+      h("div", { "class": "rowtop" }, h("span", { "class": "title", text: q.title || "Untitled" }),
+        h("span", { "class": "st" }, h("span", { "class": "dot " + s }), STATUS[s])),
+      q.note ? h("p", { "class": "desc", text: q.note }) : null,
+      h("p", { "class": "meta", text: meta.join("  ·  ") }),
+      vars.length ? h("p", { "class": "meta", text: "Uses " + vars.join(", ") }) : null,
+      flags.length ? h("p", { "class": "flags" }, flags.map(function (f) { return h("span", { "class": f.warn ? "warn" : null, text: f.t }); })) : null,
+      s === "afgerond" && q.outcome ? h("p", { "class": "out", text: q.outcome }) : null,
+      s === "afgerond" && q.outputUrl ? h("p", { "class": "meta" }, url ? h("a", { href: url, target: "_blank", rel: "noopener noreferrer", text: q.outputUrl }) : String(q.outputUrl)) : null,
+      last && s !== "afgerond" ? h("p", { "class": "meta", text: day(last.at) + ": " + clip(last.text, 160) }) : null,
+      acts.length ? h("div", { "class": "acts" }, acts) : null);
+  }
+
+  function viewOverview() {
+    var ps = state.projects, live = liveQs(), c = countBy(live);
+    if (!ps.length) return view("Overview", null, h("p", { "class": "empty", text: "No projects yet." }));
+    var figs = h("div", { "class": "figs" }, KEYS.map(function (k) {
+      return h("div", { "class": "fig" }, h("b", { text: String(c[k]) }), h("span", null, h("span", { "class": "dot " + k }), STATUS[k]));
+    }));
+    var tbl = h("div", { "class": "tblwrap" }, h("table", null,
+      h("thead", null, h("tr", null, h("th", { text: "Project" }), h("th", { text: "" }), h("th", { "class": "r", text: "Open" }), h("th", { "class": "r", text: "Assigned" }), h("th", { "class": "r", text: "Completed" }))),
+      h("tbody", null, ps.map(function (p) {
+        var pc = countBy(questionsOf(p.id));
+        return h("tr", { "class": "click", onclick: function () { go(p.id); } },
+          h("td", null, h("b", { text: p.name || "Untitled" })), h("td", { style: "width:40%" }, bar(pc)),
+          h("td", { "class": "r num", text: String(pc.open) }), h("td", { "class": "r num", text: String(pc.toegewezen) }), h("td", { "class": "r num", text: String(pc.afgerond) }));
+      }))));
+    var att = [];
+    live.forEach(function (q) {
+      flagsOf(q).filter(function (f) { return f.warn; }).forEach(function (f) { att.push({ title: q.title, text: f.t, pid: qProjectIds(q)[0] }); });
+    });
+    supNames().forEach(function (n) { var l = supLoad(n); if (l.cap != null && l.c.toegewezen > l.cap) att.push({ title: n, text: "Over capacity: " + l.c.toegewezen + " of " + l.cap, pid: "people" }); });
+    var attEl = att.length ? h("div", { "class": "tblwrap" }, h("table", null, h("tbody", null, att.slice(0, 12).map(function (a) {
+      return h("tr", { "class": "click", onclick: function () { go(a.pid); } }, h("td", { text: clip(a.title, 110) }), h("td", { "class": "r" }, h("span", { "class": "err", text: a.text })));
+    })))) : h("p", { "class": "empty", text: "Nothing needs attention." });
+    return view("Overview", null, figs, sec("Projects", null, tbl), sec("Needs attention", null, attEl),
+      sec("Recent activity", tbtn("All activity", function () { go("activity"); }), activityList(8)));
+  }
+
+  function filterBar(all, withStatus) {
+    var c = countBy(all), tags = allTags();
+    var el = h("div", { "class": "filters" });
+    if (withStatus) [["alle", "All", all.length]].concat(KEYS.map(function (k) { return [k, STATUS[k], c[k]]; })).forEach(function (f) {
+      el.append(h("button", { type: "button", "class": "filter", "aria-pressed": String(state.filter === f[0]), onclick: function () { state.filter = f[0]; render(); } }, f[1] + " " + f[2]));
+    });
+    if (tags.length) {
+      var s = h("select", { "class": "inline", "aria-label": "Tag", onchange: function (ev) { state.tag = ev.currentTarget.value; render(); } },
+        h("option", { value: "", text: "All tags" }), tags.map(function (t) { return h("option", { value: t, text: "#" + t, selected: state.tag === t }); }));
+      el.append(s);
+    }
+    return el;
+  }
+  function applyFilter(qs, withStatus) {
+    return qs.filter(function (q) {
+      return (!withStatus || state.filter === "alle" || statusOf(q) === state.filter) && (!state.tag || arr(q.tags).indexOf(state.tag) !== -1);
+    });
+  }
+
+  function viewOpen() {
+    var all = sortQs(liveQs().filter(function (q) { return statusOf(q) === "open"; }));
+    return view("Open questions", null, filterBar(all, false), rows(applyFilter(all, false), true, "No open questions."));
+  }
+  function viewOutcomes() {
+    var done = liveQs().filter(function (q) { return statusOf(q) === "afgerond"; })
+      .sort(function (a, b) { return String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")); });
+    return view("Outcomes", null, filterBar(done, false), rows(applyFilter(done, false), true, "No completed questions yet."));
+  }
+  function viewSearch() {
+    var words = state.query.toLowerCase().split(/\s+/).filter(Boolean), vm = varMap();
+    var hits = sortQs(liveQs().filter(function (q) {
+      var hay = [q.title, q.note, q.assignee, q.supervisor, q.level, q.outcome, q.missing, qProjectNames(q), STATUS[statusOf(q)]]
+        .concat(arr(q.tags), arr(q.log).map(function (l) { return l.text; }), arr(q.vars).map(function (id) { return vm[id] && vm[id].name; })).join(" ").toLowerCase();
+      return words.every(function (w) { return hay.indexOf(w) !== -1; });
+    }));
+    return view(plural(hits.length, "result", "results"), tbtn("Clear", function () { go(state.view); }), rows(hits, true, "No results."));
+  }
+
+  function viewPeople() {
+    var live = liveQs(), sups = supNames();
+    var supTbl = sups.length ? h("div", { "class": "tblwrap" }, h("table", null,
+      h("thead", null, h("tr", null, h("th", { text: "Supervisor" }), h("th", { "class": "r", text: "Students now" }), h("th", { "class": "r", text: "Capacity" }), h("th", { "class": "r", text: "Open" }), h("th", { "class": "r", text: "Completed" }), h("th", { text: "" }))),
+      h("tbody", null, sups.map(function (n) {
+        var l = supLoad(n);
+        return h("tr", null, h("td", null, h("b", { text: n }), l.full ? h("span", { "class": "err", text: "  Full" }) : null),
+          h("td", { "class": "r num", text: String(l.c.toegewezen) }), h("td", { "class": "r num", text: l.cap == null ? "–" : String(l.cap) }),
+          h("td", { "class": "r num", text: String(l.c.open) }), h("td", { "class": "r num", text: String(l.c.afgerond) }),
+          h("td", { "class": "r" }, state.readonly ? null : tbtn("Edit", function () { openSup(n); })));
+      })))) : h("p", { "class": "empty", text: "No supervisors yet." });
+
+    var items = live.filter(function (q) { return statusOf(q) === "toegewezen" && q.assignee; })
+      .sort(function (a, b) { return a.assignee.localeCompare(b.assignee) || String(a.startDate || "").localeCompare(String(b.startDate || "")); });
+    var tl;
+    if (!items.length) tl = h("p", { "class": "empty", text: "Nobody assigned yet." });
+    else {
+      var ok = function (q) { return q.startDate && q.endDate && q.endDate >= q.startDate; };
+      var dated = items.filter(ok), min = Infinity, max = -Infinity;
+      dated.forEach(function (q) { min = Math.min(min, Date.parse(q.startDate)); max = Math.max(max, Date.parse(q.endDate)); });
+      var span = Math.max(max - min, 864e5), now = Date.now();
+      var nowPos = dated.length && now >= min && now <= max ? (now - min) / span * 100 : null;
+      tl = h("div", { "class": "tl" },
+        dated.length ? h("div", { "class": "trow axis" }, h("span", { text: nowPos == null ? "" : "Line marks today" }),
+          h("div", { "class": "taxis" }, h("span", { text: day(new Date(min).toISOString()) }), h("span", { text: day(new Date(max).toISOString()) }))) : null,
+        items.map(function (q) {
+          var track;
+          if (ok(q)) {
+            track = h("div", { "class": "track", role: "img", "aria-label": day(q.startDate) + " to " + day(q.endDate) });
+            var b = h("span", { "class": "span" });
+            b.style.left = ((Date.parse(q.startDate) - min) / span * 100) + "%";
+            b.style.width = ((Date.parse(q.endDate) - Date.parse(q.startDate)) / span * 100) + "%";
+            track.append(b);
+            if (nowPos != null) { var m = h("span", { "class": "now" }); m.style.left = nowPos + "%"; track.append(m); }
+          } else track = h("span", { "class": "muted small", text: "No dates" });
+          return h("div", { "class": "trow" },
+            h("div", { "class": "tlabel" }, h("b", { text: q.assignee }), h("span", { "class": "muted small", text: qProjectNames(q) + "  ·  " + clip(q.title, 90) })), track);
+        }));
+    }
+    return view("People", state.readonly ? null : tbtn("Add supervisor", function () { openSup(""); }),
+      sec("Supervisors", null, supTbl), sec("Who is working on what", null, tl));
+  }
+
+  function activityItems() {
+    var all = [];
+    Object.keys(state.activity).forEach(function (k) { all = all.concat(arr(state.activity[k])); });
+    return all.sort(function (a, b) { return String(b.at).localeCompare(String(a.at)); });
+  }
+  function ensureNames(ids) {
+    if (!state.user) return;
+    var need = ids.filter(function (id, i) { return id && !(id in state.names) && ids.indexOf(id) === i; });
+    if (!need.length) return;
+    need.forEach(function (id) { state.names[id] = ""; });
+    state.user.profiles(need).then(function (ps) {
+      var changed = false;
+      need.forEach(function (id) { if (ps[id] && ps[id].name) { state.names[id] = ps[id].name; changed = true; } });
+      if (changed) render();
+    });
+  }
+  function activityList(limit) {
+    var items = activityItems();
+    if (limit) items = items.slice(0, limit);
+    if (!items.length) return h("p", { "class": "empty", text: "No activity yet." });
+    ensureNames(items.map(function (i) { return i.by; }));
+    return h("div", { "class": "tblwrap" }, h("table", null, h("tbody", null, items.map(function (i) {
+      return h("tr", null, h("td", { text: String(i.text || "") }),
+        h("td", { "class": "muted", style: "white-space:nowrap", text: state.names[i.by] || "" }),
+        h("td", { "class": "r muted num", style: "white-space:nowrap", text: day(i.at) }));
+    }))));
+  }
+  function viewActivity() {
+    var week = activityItems().filter(function (i) { return daysSince(i.at) < 7; }).length;
+    return view("Activity", null, h("p", { "class": "muted", text: plural(week, "change", "changes") + " in the last 7 days" }), activityList(0));
+  }
+
+  function viewProject(p) {
+    var ro = state.readonly, all = sortQs(questionsOf(p.id));
+    var tabs = h("div", { "class": "subtabs", role: "tablist" }, [["questions", "Questions " + all.length], ["dataset", "Dataset"], ["studies", "Related studies " + arr(p.studies).length]].map(function (t) {
+      return h("button", { type: "button", "class": "subtab", role: "tab", "aria-selected": String(state.ptab === t[0]), onclick: function () { state.ptab = t[0]; render(); } }, t[1]);
+    }));
+    var right = ro ? null : [tbtn("Edit", function () { openProject(p); }), tbtn("Delete", function () { askDeleteProject(p.id); }, "danger")];
+    var purl = linkFor(p.primaryUrl), plabel = p.primaryLabel || "Study protocol";
+    var intro = h("div", { "class": "sec" },
+      p.dataset ? h("p", { "class": "prose", text: p.dataset }) : h("p", { "class": "muted", text: "No description yet." }),
+      p.primaryUrl ? h("p", null, purl ? h("a", { href: purl, target: "_blank", rel: "noopener noreferrer", text: plabel })
+                                       : plabel + ": " + p.primaryUrl) : null,
+      (p.dataOwner || arr(p.collaborators).length) ? h("div", { "class": "tblwrap" }, h("table", { "class": "facts" }, h("tbody", null,
+        p.dataOwner ? h("tr", null, h("th", { scope: "row", text: "Data owner" }), h("td", { text: p.dataOwner })) : null,
+        arr(p.collaborators).length ? h("tr", null, h("th", { scope: "row", text: "Primary collaborators" }), h("td", { text: arr(p.collaborators).join(", ") })) : null))) : null);
+    tabs = [intro, tabs];
+    if (state.ptab === "dataset") {
+      var vars = arr(p.variables), used = {};
+      state.questions.forEach(function (q) { arr(q.vars).forEach(function (id) { used[id] = (used[id] || 0) + 1; }); });
+      var vt = vars.length ? h("div", { "class": "tblwrap" }, h("table", null,
+        h("thead", null, h("tr", null, h("th", { text: "Variable" }), h("th", { text: "Modality / type" }), h("th", { text: "Timepoints" }), h("th", { "class": "r", text: "N" }), h("th", { "class": "r", text: "Questions" }), h("th", { text: "" }))),
+        h("tbody", null, vars.map(function (v) {
+          return h("tr", null, h("td", null, h("b", { text: v.name || "" })), h("td", { text: v.modality || "" }), h("td", { text: v.timepoints || "" }),
+            h("td", { "class": "r num", text: v.n || "" }), h("td", { "class": "r num" + (used[v.id] ? "" : " muted"), text: used[v.id] ? String(used[v.id]) : "Unused" }),
+            h("td", { "class": "r" }, ro ? null : tbtn("Edit", function () { openVariable(p, v); })));
+        })))) : h("p", { "class": "empty", text: "No variables yet." });
+      return view(p.name || "Untitled", right, tabs,
+        sec("Variables", ro ? null : tbtn("Add variable", function () { openVariable(p, null); }), vt),
+        arr(p.sections).map(function (s) {
+          return sec(s.title || "Text", ro ? null : tbtn("Edit", function () { openSection(p, s); }), h("p", { "class": "prose", text: s.body || "" }));
+        }),
+        ro ? null : h("div", null, tbtn("Add text block", function () { openSection(p, null); })));
+    }
+    if (state.ptab === "studies") {
+      var studies = arr(p.studies).slice().sort(function (a, b) { return String(b.year || "").localeCompare(String(a.year || "")) || String(a.title || "").localeCompare(String(b.title || "")); });
+      return view(p.name || "Untitled", right, tabs, h("div", { "class": "sec" },
+        ro ? null : h("div", { "class": "sechead" }, h("span"), h("button", { type: "button", "class": "btn primary", onclick: function () { openStudy(p, null); } }, "Add study")),
+        studies.length ? h("div", { "class": "rows" }, studies.map(function (s) {
+          var url = linkFor(s.url);
+          return h("article", { "class": "row" },
+            h("span", { "class": "title" }, url ? h("a", { href: url, target: "_blank", rel: "noopener noreferrer", text: s.title || "Untitled" }) : (s.title || "Untitled")),
+            h("p", { "class": "meta", text: [s.authors, s.journal, s.year].filter(Boolean).join("  ·  ") }),
+            s.note ? h("p", { "class": "desc", text: s.note }) : null,
+            ro ? null : h("div", { "class": "acts" }, tbtn("Edit", function () { openStudy(p, s); })));
+        })) : h("p", { "class": "empty", text: "No related studies yet." })));
+    }
+    var shown = applyFilter(all, true);
+    var tools =h("div", { "class": "sechead" }, filterBar(all, true), ro ? null : h("div", { "class": "acts" },
+      state.sample ? h("button", { type: "button", "class": "btn", onclick: function () { openSuggest(p); } }, "Suggest questions") : null,
+      h("button", { type: "button", "class": "btn primary", onclick: function () { openQuestion(null); } }, "Add question")));
+    return view(p.name || "Untitled", right, tabs, h("div", { "class": "sec" }, tools,
+      rows(shown, false, all.length ? "No questions match." : "No questions yet.")));
+  }
+
+  // ---------- Writes ----------
+  function errText(e) {
+    if (e && e.code === "invalid_argument") { state.readonly = true; return "Save refused. You probably lack write access."; }
+    if (e && e.code === "quota_exceeded") return "Storage is full. Delete old items first.";
+    return "Save failed. Try again.";
+  }
+  function showErr(id, e) { var el = $(id); el.textContent = typeof e === "string" ? e : errText(e); el.hidden = false; }
+  function busy(root, on) { root.querySelectorAll("button").forEach(function (b) { b.disabled = on; }); }
+  var actQueue = Promise.resolve();
+  function logAct(text) {
+    if (!state.db) return;
+    actQueue = actQueue.then(async function () {
+      var key = nowIso().slice(0, 7);
+      var items = arr(state.activity[key]).map(function (i) { return { at: i.at, by: i.by || null, text: i.text }; })
+        .concat([{ at: nowIso(), by: state.uid || null, text: text }]).slice(-300);
+      state.activity[key] = items;
+      await state.db.doc("activity/" + key).set({ items: items });
+    }).catch(function () {});
+  }
+  async function patchQuestion(id, data, act) {
+    state.flash = "";
+    try { await state.db.doc("questions/" + id).update(Object.assign({ updatedAt: nowIso() }, data)); if (act) logAct(act); }
+    catch (e) { state.flash = errText(e); }
+    render();
+  }
+  document.querySelectorAll("[data-close]").forEach(function (b) { b.addEventListener("click", function () { b.closest("dialog").close(); }); });
+
+  var pendingConfirm = null;
+  function confirmDo(text, fn) { $("c-text").textContent = text; $("c-err").hidden = true; pendingConfirm = fn; $("dlg-confirm").showModal(); }
+  $("c-ok").addEventListener("click", async function () {
+    if (!pendingConfirm) return;
+    var dlg = $("dlg-confirm"); busy(dlg, true);
+    try { await pendingConfirm(); pendingConfirm = null; dlg.close(); } catch (e) { showErr("c-err", e); }
+    busy(dlg, false); render();
+  });
+  async function submit(form, errId, fn, dlgId) {
+    busy(form, true);
+    try { await fn(); $(dlgId).close(); } catch (e) { showErr(errId, e); }
+    busy(form, false); render();
+  }
+
+  // Project
+  var editProject = null;
+  function openProject(p) {
+    editProject = p ? p.id : null;
+    $("dp-h").textContent = p ? "Edit project" : "Add project";
+    $("p-name").value = p ? (p.name || "") : ""; $("p-dataset").value = p ? (p.dataset || "") : "";
+    $("p-url").value = p ? (p.primaryUrl || "") : ""; $("p-urllabel").value = p ? (p.primaryLabel || "") : "";
+    $("p-collab").value = p ? arr(p.collaborators).join("\n") : ""; $("p-owner").value = p ? (p.dataOwner || "") : "";
+    $("p-err").hidden = true; $("dlg-project").showModal();
+  }
+  $("form-project").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var now = nowIso(), data = { name: $("p-name").value.trim(), dataset: $("p-dataset").value.trim(),
+      primaryUrl: $("p-url").value.trim(), primaryLabel: $("p-urllabel").value.trim(),
+      collaborators: $("p-collab").value.split("\n").map(function (s) { return s.trim(); }).filter(Boolean),
+      dataOwner: $("p-owner").value.trim(), updatedAt: now };
+    if (!data.name) return;
+    submit(ev.currentTarget, "p-err", async function () {
+      if (editProject) { await state.db.doc("projects/" + editProject).update(data); logAct("Edited project " + data.name); }
+      else {
+        data.order = state.projects.reduce(function (m, p) { return Math.max(m, Number(p.order) || 0); }, 0) + 1;
+        data.createdAt = now; data.sections = []; data.variables = [];
+        var ref = state.db.collection("projects").doc();
+        await ref.set(data); logAct("Added project " + data.name);
+        state.view = ref.id; state.ptab = "dataset"; remember("qmind-view", ref.id);
+      }
+    }, "dlg-project");
+  });
+  function askDeleteProject(id) {
+    var p = projectById(id); if (!p) return;
+    var own = state.questions.filter(function (q) { return q.projectId === id; });
+    confirmDo("Delete project " + (p.name || "") + (own.length ? " and its " + plural(own.length, "question", "questions") : "") + "? This cannot be undone.", async function () {
+      for (var i = 0; i < own.length; i++) await state.db.doc("questions/" + own[i].id).delete();
+      await state.db.doc("projects/" + id).delete();
+      logAct("Deleted project " + (p.name || "")); state.view = "overview";
+    });
+  }
+  async function saveArray(projectId, key, change, act) {
+    var p = projectById(projectId); if (!p) return;
+    var data = { updatedAt: nowIso() };
+    data[key] = change(arr(p[key]).map(function (x) { return Object.assign({}, x); }));
+    await state.db.doc("projects/" + projectId).update(data);
+    if (act) logAct(act + " (" + (p.name || "") + ")");
+  }
+
+  // Text block
+  var editSection = null;
+  function openSection(p, s) {
+    editSection = { pid: p.id, id: s ? s.id : null };
+    $("ds-h").textContent = s ? "Edit text block" : "Add text block";
+    $("s-title").value = s ? (s.title || "") : ""; $("s-body").value = s ? (s.body || "") : "";
+    $("s-err").hidden = true; $("s-delete").hidden = !s; $("dlg-section").showModal();
+  }
+  $("form-section").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var es = editSection, item = { title: $("s-title").value.trim(), body: $("s-body").value.trim() };
+    if (!item.title || !es) return;
+    submit(ev.currentTarget, "s-err", function () {
+      return saveArray(es.pid, "sections", function (list) {
+        if (!es.id) return list.concat([Object.assign({ id: uid() }, item)]);
+        return list.map(function (s) { return s.id === es.id ? Object.assign({ id: s.id }, item) : s; });
+      }, "Updated text “" + item.title + "”");
+    }, "dlg-section");
+  });
+  $("s-delete").addEventListener("click", function () {
+    var es = editSection; if (!es || !es.id) return;
+    confirmDo("Delete this text block?", async function () {
+      await saveArray(es.pid, "sections", function (list) { return list.filter(function (s) { return s.id !== es.id; }); }, "Deleted a text block");
+      $("dlg-section").close();
+    });
+  });
+
+  // Variable
+  var editVar = null;
+  function openVariable(p, v) {
+    editVar = { pid: p.id, id: v ? v.id : null };
+    $("dv-h").textContent = v ? "Edit variable" : "Add variable";
+    $("v-name").value = v ? (v.name || "") : ""; $("v-modality").value = v ? (v.modality || "") : "";
+    $("v-time").value = v ? (v.timepoints || "") : ""; $("v-n").value = v ? (v.n || "") : "";
+    var mods = {};
+    state.projects.forEach(function (x) { arr(x.variables).forEach(function (y) { if (y.modality) mods[y.modality] = 1; }); });
+    $("names-modality").replaceChildren.apply($("names-modality"), Object.keys(mods).sort().map(function (m) { return h("option", { value: m }); }));
+    $("v-err").hidden = true; $("v-delete").hidden = !v; $("dlg-variable").showModal();
+  }
+  $("form-variable").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var e = editVar, item = { name: $("v-name").value.trim(), modality: $("v-modality").value.trim(), timepoints: $("v-time").value.trim(), n: $("v-n").value.trim() };
+    if (!item.name || !e) return;
+    submit(ev.currentTarget, "v-err", function () {
+      return saveArray(e.pid, "variables", function (list) {
+        if (!e.id) return list.concat([Object.assign({ id: uid() }, item)]);
+        return list.map(function (v) { return v.id === e.id ? Object.assign({ id: v.id }, item) : v; });
+      }, "Updated variable " + item.name);
+    }, "dlg-variable");
+  });
+  $("v-delete").addEventListener("click", function () {
+    var e = editVar; if (!e || !e.id) return;
+    confirmDo("Delete this variable? Questions that use it lose the link.", async function () {
+      await saveArray(e.pid, "variables", function (list) { return list.filter(function (v) { return v.id !== e.id; }); }, "Deleted a variable");
+      $("dlg-variable").close();
+    });
+  });
+
+  // Related study
+  var editStudy = null;
+  function openStudy(p, s) {
+    editStudy = { pid: p.id, id: s ? s.id : null };
+    $("dt-h").textContent = s ? "Edit related study" : "Add related study";
+    $("t-title").value = s ? (s.title || "") : ""; $("t-authors").value = s ? (s.authors || "") : "";
+    $("t-journal").value = s ? (s.journal || "") : ""; $("t-year").value = s ? (s.year || "") : "";
+    $("t-url").value = s ? (s.url || "") : ""; $("t-note").value = s ? (s.note || "") : "";
+    $("t-err").hidden = true; $("t-delete").hidden = !s; $("dlg-study").showModal();
+  }
+  $("form-study").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var e = editStudy, item = { title: $("t-title").value.trim(), authors: $("t-authors").value.trim(), journal: $("t-journal").value.trim(),
+      year: $("t-year").value.trim(), url: $("t-url").value.trim(), note: $("t-note").value.trim() };
+    if (!item.title || !e) return;
+    submit(ev.currentTarget, "t-err", function () {
+      return saveArray(e.pid, "studies", function (list) {
+        if (!e.id) return list.concat([Object.assign({ id: uid() }, item)]);
+        return list.map(function (s) { return s.id === e.id ? Object.assign({ id: s.id }, item) : s; });
+      }, (e.id ? "Updated" : "Added") + " related study “" + clip(item.title, 70) + "”");
+    }, "dlg-study");
+  });
+  $("t-delete").addEventListener("click", function () {
+    var e = editStudy; if (!e || !e.id) return;
+    confirmDo("Delete this related study?", async function () {
+      await saveArray(e.pid, "studies", function (list) { return list.filter(function (s) { return s.id !== e.id; }); }, "Deleted a related study");
+      $("dlg-study").close();
+    });
+  });
+
+  // Supervisor
+  function openSup(name) {
+    var d = name ? supDoc(name) : null;
+    $("u-name").value = name || ""; $("u-name").readOnly = !!name;
+    $("u-cap").value = d && d.capacity != null ? d.capacity : "";
+    $("u-err").hidden = true; $("dlg-sup").showModal();
+  }
+  $("form-sup").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var name = $("u-name").value.trim(), raw = $("u-cap").value.trim();
+    if (!name) return;
+    var data = { name: name, capacity: raw === "" ? null : Math.max(0, Math.round(Number(raw)) || 0), updatedAt: nowIso() };
+    submit(ev.currentTarget, "u-err", async function () {
+      var d = supDoc(name);
+      if (d) await state.db.doc("supervisors/" + d.id).update(data);
+      else await state.db.collection("supervisors").doc().set(data);
+      logAct("Updated supervisor " + name);
+    }, "dlg-sup");
+  });
+
+  // Question
+  var dq = null;
+  function chk(value, label, on) {
+    var i = h("input", { type: "checkbox", value: value }); i.checked = !!on;
+    return h("label", { "class": "chk" }, i, " " + label);
+  }
+  function checkedIn(id) { return Array.prototype.map.call($(id).querySelectorAll("input:checked"), function (i) { return i.value; }); }
+  function buildVarChecks(selected) {
+    var box = $("q-vars"), pids = [dq.projectId].concat(checkedIn("q-also")); box.replaceChildren();
+    pids.forEach(function (pid) {
+      var p = projectById(pid); if (!p) return;
+      arr(p.variables).forEach(function (v) {
+        box.append(chk(v.id, (pids.length > 1 ? (p.name || "") + ": " : "") + v.name + (v.modality ? " (" + v.modality + ")" : ""), selected.indexOf(v.id) !== -1));
+      });
+    });
+    if (!box.children.length) box.append(h("span", { "class": "muted small", text: "No variables defined." }));
+  }
+  function renderApplicants() {
+    var list = $("q-applicants"); list.replaceChildren();
+    dq.applicants.forEach(function (a) {
+      list.append(h("li", null, h("b", { text: a.name || "" }), a.programme ? ", " + a.programme : "",
+        h("span", { "class": "who", text: day(a.at) }), a.motivation ? String(a.motivation) : "",
+        h("div", { "class": "acts" },
+          tbtn("Accept", function () {
+            $("q-assignee").value = a.name || ""; $("q-status").value = "toegewezen";
+            if (!$("q-start").value) $("q-start").value = today();
+            $("grp-outcome").hidden = true;
+          }),
+          tbtn("Remove", function () { dq.applicants = dq.applicants.filter(function (x) { return x.id !== a.id; }); renderApplicants(); }, "danger"))));
+    });
+    $("grp-applicants").hidden = !dq.applicants.length;
+  }
+  function tokens(s) { return String(s || "").toLowerCase().split(/[^a-z0-9]+/).filter(function (w) { return w.length > 3; }); }
+  function localSimilar() {
+    var mine = tokens($("q-title").value), el = $("q-similar");
+    if (dq.aiOverlap) return;
+    var best = [];
+    if (mine.length >= 3) liveQs().forEach(function (q) {
+      if (q.id === dq.id) return;
+      var theirs = tokens(q.title), inter = mine.filter(function (w, i) { return theirs.indexOf(w) !== -1 && mine.indexOf(w) === i; }).length;
+      var uni = mine.concat(theirs).filter(function (w, i, a) { return a.indexOf(w) === i; }).length;
+      if (uni && inter / uni >= 0.4) best.push({ s: inter / uni, q: q });
+    });
+    best.sort(function (a, b) { return b.s - a.s; });
+    el.textContent = best.length ? "Similar: " + best.slice(0, 3).map(function (b) { return "“" + clip(b.q.title, 90) + "” (" + qProjectNames(b.q) + ", " + STATUS[statusOf(b.q)] + ")"; }).join("; ") : "";
+    el.hidden = !best.length;
+  }
+  function openQuestion(q, opts) {
+    opts = opts || {};
+    var src = q || opts.prefill || {};
+    dq = { id: q ? q.id : null, projectId: q ? q.projectId : state.view, aiOverlap: false,
+      applicants: q ? arr(q.applicants).map(function (a) { return Object.assign({}, a); }) : [] };
+    $("dq-h").textContent = q ? "Edit question" : "Add question";
+    $("q-title").value = src.title || ""; $("q-note").value = src.note || "";
+    $("q-status").value = opts.status || (q ? statusOf(q) : "open");
+    $("q-assignee").value = src.assignee || ""; $("q-supervisor").value = src.supervisor || "";
+    $("q-start").value = src.startDate || ""; $("q-end").value = src.endDate || "";
+    $("q-level").value = ["Bachelor", "Master", "PhD", "Other"].indexOf(src.level) !== -1 ? src.level : "";
+    $("q-priority").value = PRIO[src.priority] ? src.priority : ""; $("q-effort").value = EFFORT[src.effort] ? src.effort : "";
+    $("q-tags").value = arr(src.tags).join(", "); $("q-missing").value = src.missing || "";
+    var c = src.checks || {};
+    $("q-c-ethics").checked = !!c.ethics; $("q-c-access").checked = !!c.access; $("q-c-agreement").checked = !!c.agreement;
+    $("q-outcome").value = src.outcome || ""; $("q-url").value = src.outputUrl || ""; $("q-newnote").value = "";
+    $("grp-outcome").hidden = $("q-status").value !== "afgerond";
+    var others = state.projects.filter(function (p) { return p.id !== dq.projectId; });
+    $("q-also").replaceChildren.apply($("q-also"), others.map(function (p) { return chk(p.id, p.name || "Untitled", arr(src.projectIds).indexOf(p.id) !== -1); }));
+    $("q-also-field").hidden = !others.length;
+    buildVarChecks(arr(src.vars));
+    var names = function (key, list) {
+      var m = {};
+      state.questions.forEach(function (x) { if (x[key]) m[x[key]] = 1; });
+      (list || []).forEach(function (n) { m[n] = 1; });
+      $("names-" + key).replaceChildren.apply($("names-" + key), Object.keys(m).sort().map(function (n) { return h("option", { value: n }); }));
+    };
+    names("assignee"); names("supervisor", supNames());
+    var log = q ? arr(q.log) : [];
+    $("q-log").replaceChildren.apply($("q-log"), log.map(function (l) { return h("li", null, h("time", { text: day(l.at) }), String(l.text || "")); }));
+    $("q-log").hidden = !log.length;
+    renderApplicants();
+    $("q-err").hidden = true; $("q-delete").hidden = !q; $("q-overlap").hidden = !state.sample;
+    $("q-similar").hidden = true; localSimilar();
+    $("dlg-question").showModal();
+    if (opts.focus) $(opts.focus).focus();
+  }
+  $("q-status").addEventListener("change", function () { $("grp-outcome").hidden = $("q-status").value !== "afgerond"; });
+  $("q-also").addEventListener("change", function () { buildVarChecks(checkedIn("q-vars")); });
+  $("q-title").addEventListener("input", function () { dq.aiOverlap = false; localSimilar(); });
+  $("q-overlap").addEventListener("click", async function () {
+    var title = $("q-title").value.trim(), el = $("q-similar"), btn = $("q-overlap");
+    if (!title || !state.sample) return;
+    var others = liveQs().filter(function (q) { return q.id !== dq.id; }).slice(0, 300);
+    if (!others.length) { el.textContent = "No other questions to compare with."; el.hidden = false; return; }
+    btn.disabled = true; el.textContent = "Checking…"; el.hidden = false; dq.aiOverlap = true;
+    var prompt = "New research question:\n" + title + "\n\nExisting questions:\n" +
+      others.map(function (q, i) { return (i + 1) + ". [" + qProjectNames(q) + ", " + STATUS[statusOf(q)] + "] " + clip(q.title, 300); }).join("\n") +
+      "\n\nReply with only a JSON array of objects {\"n\": number, \"reason\": string} for the existing questions that substantially overlap with the new one " +
+      "(same aim, or answerable by the same analysis). Use an empty array if none overlap. Each reason is at most 12 words.";
+    try {
+      var res = await state.sample.json(prompt, { modelTier: "quick" });
+      var hits = arr(res).map(function (r) { var q = others[Number(r && r.n) - 1]; return q ? "“" + clip(q.title, 90) + "” (" + qProjectNames(q) + ", " + STATUS[statusOf(q)] + "): " + String(r.reason || "") : null; }).filter(Boolean);
+      el.textContent = hits.length ? "Overlap: " + hits.join("; ") : "No overlap found.";
+    } catch (e) { el.textContent = "Overlap check unavailable."; dq.aiOverlap = false; }
+    btn.disabled = false;
+  });
+  $("form-question").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var now = nowIso(), old = dq.id ? questionById(dq.id) : null;
+    var data = {
+      title: $("q-title").value.trim(), note: $("q-note").value.trim(), status: $("q-status").value,
+      assignee: $("q-assignee").value.trim(), supervisor: $("q-supervisor").value.trim(),
+      startDate: $("q-start").value, endDate: $("q-end").value,
+      level: $("q-level").value, priority: $("q-priority").value, effort: $("q-effort").value,
+      tags: $("q-tags").value.split(",").map(function (t) { return t.trim().replace(/^#/, "").toLowerCase(); }).filter(function (t, i, a) { return t && a.indexOf(t) === i; }),
+      projectIds: checkedIn("q-also"), vars: checkedIn("q-vars"), missing: $("q-missing").value.trim(),
+      checks: { ethics: $("q-c-ethics").checked, access: $("q-c-access").checked, agreement: $("q-c-agreement").checked },
+      outcome: $("q-outcome").value.trim(), outputUrl: $("q-url").value.trim(),
+      applicants: dq.applicants, updatedAt: now
+    };
+    if (!data.title || !data.supervisor) return;
+    if (data.assignee && data.status === "open") data.status = "toegewezen";
+    if (!data.assignee && data.status === "toegewezen") { showErr("q-err", "Enter who it is assigned to, or set the status to Open."); $("q-assignee").focus(); return; }
+    if (data.endDate && data.startDate && data.endDate < data.startDate) { showErr("q-err", "The end date is before the start date."); return; }
+    if (data.status === "toegewezen" && !data.startDate) data.startDate = today();
+    var note = $("q-newnote").value.trim();
+    var oldLog = old ? arr(old.log).map(function (l) { return { at: l.at, text: l.text }; }) : [];
+    if (note) data.log = oldLog.concat([{ at: now, text: note }]);
+    var t = "“" + clip(data.title, 70) + "”", act = "Edited " + t;
+    if (!old) act = "Added " + t;
+    else if (statusOf(old) !== data.status || (old.assignee || "") !== data.assignee) {
+      if (data.status === "toegewezen") act = "Assigned " + t + " to " + data.assignee;
+      else if (data.status === "afgerond") act = "Completed " + t;
+      else act = "Reopened " + t;
+    } else if (note) act = "Note on " + t;
+    submit(ev.currentTarget, "q-err", async function () {
+      if (dq.id) await state.db.doc("questions/" + dq.id).update(data);
+      else {
+        if (!projectById(dq.projectId)) throw { code: "unavailable" };
+        data.projectId = dq.projectId; data.createdAt = now; if (!data.log) data.log = [];
+        await state.db.collection("questions").doc().set(data);
+        state.filter = "alle"; state.tag = "";
+      }
+      logAct(act);
+    }, "dlg-question");
+  });
+  $("q-delete").addEventListener("click", function () {
+    var id = dq && dq.id, q = id && questionById(id); if (!q) return;
+    confirmDo("Delete this question and its notes?", async function () {
+      await state.db.doc("questions/" + id).delete(); logAct("Deleted “" + clip(q.title, 70) + "”"); $("dlg-question").close();
+    });
+  });
+
+  // Apply
+  var applyId = null;
+  function openApply(q) {
+    applyId = q.id; $("a-title").textContent = q.title || "";
+    $("a-name").value = state.myName || ""; $("a-programme").value = ""; $("a-motivation").value = "";
+    $("a-err").hidden = true; $("dlg-apply").showModal();
+  }
+  $("form-apply").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var q = questionById(applyId), name = $("a-name").value.trim();
+    if (!q || !name) return;
+    var list = arr(q.applicants).map(function (a) { return Object.assign({}, a); })
+      .concat([{ id: uid(), name: name, programme: $("a-programme").value.trim(), motivation: $("a-motivation").value.trim(), at: nowIso() }]);
+    submit(ev.currentTarget, "a-err", async function () {
+      await state.db.doc("questions/" + q.id).update({ applicants: list, updatedAt: nowIso() });
+      logAct(name + " applied for “" + clip(q.title, 70) + "”");
+    }, "dlg-apply");
+  });
+
+  // ---------- Claude: suggestions and proposals ----------
+  function aiCopy(code) {
+    if (code === "cancelled") return "Stopped.";
+    if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].indexOf(code) !== -1) return "Not available for you here.";
+    if (code === "rate_limited") return "Rate limit reached. Try again later.";
+    if (code === "session_expired") return "Session expired. Sign in again.";
+    return "Could not get an answer. Try again.";
+  }
+  function projectBrief(p) {
+    return "Project: " + (p.name || "") + "\nDataset: " + clip(p.dataset || "(not described)", 6000) + "\nVariables: " +
+      (arr(p.variables).map(function (v) { return v.name + (v.modality ? " [" + v.modality + "]" : "") + (v.timepoints ? ", " + v.timepoints : "") + (v.n ? ", n=" + v.n : ""); }).join("; ") || "(not listed)") + "\n" +
+      arr(p.sections).map(function (s) { return clip(s.title + ": " + s.body, 2000); }).join("\n") +
+      (arr(p.studies).length ? "\nAlready published with this dataset: " + arr(p.studies).map(function (s) { return clip(s.title, 200) + (s.year ? " (" + s.year + ")" : ""); }).join("; ") : "");
+  }
+  var GROUP = "the research group Q-MIND (Quantitative Musculoskeletal Imaging and Novel Diagnostics, Amsterdam UMC, Department of Radiology and Nuclear Medicine)";
+  var sgCtl = null, sgProject = null;
+  function openSuggest(p) {
+    sgProject = p.id; $("sg-list").replaceChildren(); $("sg-stop").hidden = true; $("sg-again").hidden = true;
+    $("dlg-suggest").showModal();
+    if (!p.dataset && !arr(p.variables).length) { $("sg-status").textContent = "Add a dataset description or variables first."; return; }
+    runSuggest(false);
+  }
+  async function runSuggest(fresh) {
+    var p = projectById(sgProject); if (!p || !state.sample) return;
+    var list = $("sg-list"), status = $("sg-status");
+    list.replaceChildren(); status.textContent = "Thinking…"; $("sg-stop").hidden = false; $("sg-again").hidden = true;
+    var prompt = "You help " + GROUP + " draft research questions for student projects.\n\n" + projectBrief(p) +
+      "\nExisting questions (do not repeat):\n" + (questionsOf(p.id).map(function (q) { return "- " + clip(q.title, 300); }).join("\n") || "(none)") +
+      "\n\nPropose 5 new, concrete research questions a student can answer using only this dataset. Do not invent data that is not listed above. " +
+      "Reply with only a JSON array of objects shaped {\"question\": string, \"description\": string, \"level\": \"Bachelor\" or \"Master\"}. " +
+      "The description is at most 2 sentences on the variables needed and the approach. Write in English.";
+    sgCtl = new AbortController();
+    var opts = { signal: sgCtl.signal }; if (fresh) opts.cache = false;
+    try {
+      var res = await state.sample.json(prompt, opts);
+      if (!Array.isArray(res) || !res.length) throw { code: "invalid_json" };
+      status.textContent = "Suggested by Claude. Review before use.";
+      res.slice(0, 8).forEach(function (r) {
+        if (!r || !r.question) return;
+        var use = tbtn("Use", function () {
+          use.textContent = "Opened"; use.disabled = true;
+          var prev = state.view; state.view = p.id;
+          openQuestion(null, { prefill: { title: String(r.question), note: String(r.description || ""), level: String(r.level || "") }, focus: "q-supervisor" });
+          state.view = prev;
+        });
+        list.append(h("div", { "class": "sug" }, h("b", { text: String(r.question) }),
+          r.description ? h("span", { "class": "muted", text: String(r.description) + (r.level ? " (" + String(r.level) + ")" : "") }) : null, h("div", null, use)));
+      });
+    } catch (e) { status.textContent = aiCopy(e && e.code); }
+    $("sg-stop").hidden = true; $("sg-again").hidden = false; sgCtl = null;
+  }
+  $("sg-stop").addEventListener("click", function () { if (sgCtl) sgCtl.abort(); });
+  $("sg-again").addEventListener("click", function () { runSuggest(true); });
+  $("dlg-suggest").addEventListener("close", function () { if (sgCtl) sgCtl.abort(); });
+
+  var prCtl = null, prId = null, prText = "";
+  function prButtons(running) {
+    var has = !!prText && !running, q = questionById(prId);
+    $("pr-stop").hidden = !running; $("pr-again").hidden = running || !state.sample || state.readonly;
+    $("pr-again").textContent = prText ? "Regenerate" : "Generate";
+    $("pr-copy").hidden = !has; $("pr-download").hidden = !has || !state.downloads;
+    $("pr-save").hidden = !has || state.readonly || !q || q.proposal === prText;
+  }
+  function openProposal(q) {
+    prId = q.id; prText = q.proposal || "";
+    $("pr-text").textContent = prText; $("pr-status").textContent = clip(q.title, 200);
+    prButtons(false); $("dlg-proposal").showModal();
+    if (!prText && state.sample && !state.readonly) runProposal(false);
+  }
+  async function runProposal(fresh) {
+    var q = questionById(prId); if (!q || !state.sample) return;
+    var vm = varMap(), out = $("pr-text");
+    var prompt = "You help " + GROUP + " write a short project proposal for a student.\n\n" +
+      qProjectIds(q).map(function (id) { return projectBrief(projectById(id)); }).join("\n\n") +
+      "\n\nResearch question: " + q.title + "\nDescription: " + (q.note || "(none)") + "\nLevel: " + (q.level || "not set") +
+      "\nVariables selected: " + (arr(q.vars).map(function (id) { return vm[id] && vm[id].name; }).filter(Boolean).join(", ") || "(none selected)") +
+      "\nSupervisor: " + (q.supervisor || "") +
+      "\n\nWrite the proposal in English, at most 350 words, as plain text without Markdown symbols. Put each of these headings on its own line: " +
+      "Background, Research question (PICO), Methods, Data, Skills needed, Deliverable. Use only data listed above; where something is unknown, say what must be confirmed with the supervisor.";
+    out.textContent = ""; $("pr-status").textContent = "Thinking…"; prCtl = new AbortController(); prButtons(true);
+    var opts = { signal: prCtl.signal, onText: function (u) { out.textContent = u.text; $("pr-status").textContent = "Written by Claude. Review before use."; } };
+    if (fresh) opts.cache = false;
+    try { var res = await state.sample(prompt, opts); prText = res.text; out.textContent = prText; $("pr-status").textContent = "Written by Claude. Review before use."; }
+    catch (e) { prText = q.proposal || ""; out.textContent = prText; $("pr-status").textContent = aiCopy(e && e.code); }
+    prCtl = null; prButtons(false);
+  }
+  $("pr-stop").addEventListener("click", function () { if (prCtl) prCtl.abort(); });
+  $("pr-again").addEventListener("click", function () { runProposal(true); });
+  $("dlg-proposal").addEventListener("close", function () { if (prCtl) prCtl.abort(); });
+  $("pr-save").addEventListener("click", async function () {
+    var q = questionById(prId); if (!q) return;
+    busy($("dlg-proposal"), true);
+    try { await state.db.doc("questions/" + q.id).update({ proposal: prText, updatedAt: nowIso() }); logAct("Saved proposal for “" + clip(q.title, 70) + "”"); $("pr-status").textContent = "Saved."; $("pr-save").hidden = true; }
+    catch (e) { $("pr-status").textContent = errText(e); }
+    busy($("dlg-proposal"), false);
+  });
+  $("pr-copy").addEventListener("click", async function () {
+    try { await navigator.clipboard.writeText(prText); $("pr-status").textContent = "Copied."; }
+    catch (e) { var r = document.createRange(); r.selectNodeContents($("pr-text")); var s = getSelection(); s.removeAllRanges(); s.addRange(r); $("pr-status").textContent = "Selected. Press Ctrl+C to copy."; }
+  });
+  $("pr-download").addEventListener("click", async function () {
+    var q = questionById(prId); if (!state.downloads || !q) return;
+    try { await state.downloads.save({ filename: "proposal-" + clip(q.title, 50).replace(/[^a-z0-9]+/gi, "-").toLowerCase() + ".txt", data: q.title + "\n\n" + prText }); }
+    catch (e) { if (!e || e.code !== "declined") $("pr-status").textContent = "Download failed."; }
+  });
+
+  // ---------- Search and export ----------
+  $("search").addEventListener("input", function (ev) { state.query = ev.currentTarget.value.trim(); render(); });
+  function csvCell(v) {
+    var s = String(v == null ? "" : v);
+    if (/^[=+\-@]/.test(s)) s = "'" + s;
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  $("btn-export").addEventListener("click", async function () {
+    if (!state.downloads) return;
+    var vm = varMap();
+    var out = [["Projects", "Research question", "Description", "Status", "Level", "Priority", "Effort", "Tags", "Assigned to", "Supervisor", "Start", "End",
+      "Variables", "Data not available", "Prerequisites", "Findings", "Output", "Applicants", "Notes", "Created", "Updated"]];
+    sortQs(liveQs()).forEach(function (q) {
+      out.push([qProjectNames(q), q.title, q.note, STATUS[statusOf(q)], q.level, PRIO[q.priority], EFFORT[q.effort], arr(q.tags).join(", "), q.assignee, q.supervisor,
+        q.startDate, q.endDate, arr(q.vars).map(function (id) { return vm[id] && vm[id].name; }).filter(Boolean).join(", "), q.missing, checksDone(q) + "/3",
+        q.outcome, q.outputUrl, arr(q.applicants).map(function (a) { return a.name; }).join(", "),
+        arr(q.log).map(function (l) { return day(l.at) + ": " + l.text; }).join(" | "), day(q.createdAt), day(q.updatedAt)]);
+    });
+    var csv = "﻿" + out.map(function (r) { return r.map(csvCell).join(";"); }).join("\r\n");
+    state.flash = "";
+    try { await state.downloads.save({ filename: "qmind-research-questions-" + today() + ".csv", data: csv }); }
+    catch (e) { if (!e || e.code !== "declined") state.flash = "Export failed."; }
+    render();
+  });
+
+  // ---------- Password and data ----------
+  // Base URL of the Cloudflare Worker (see worker/). The data lives there, not in this file.
+  var API = "";
+
+  var COLS = ["projects", "questions", "supervisors", "activity"];
+  var key = recall("qmind-key") || "", started = false;
+  var cur = {}, subs = {}, gen = 0, chain = Promise.resolve();
+  COLS.forEach(function (c) { cur[c] = {}; });
+
+  async function sha256(text) {
+    var buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+  }
+  function call(method, path, body, k) {
+    return fetch(API + path, {
+      method: method, cache: "no-store",
+      headers: { "Authorization": "Bearer " + (k || key), "Content-Type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body)
+    }).then(function (r) {
+      if (r.status === 401) throw { code: "unauthorized" };
+      if (!r.ok) throw { code: "unavailable" };
+      return r.json();
+    }, function () { throw { code: "offline" }; });
+  }
+  function snap(col) {
+    return { docs: Object.keys(cur[col]).sort().map(function (id) {
+      var d = JSON.parse(JSON.stringify(cur[col][id])); return { id: id, data: function () { return d; } };
+    }) };
+  }
+  function emit(col) { (subs[col] || []).forEach(function (fn) { fn(snap(col)); }); }
+  function apply(data) {
+    COLS.forEach(function (c) {
+      var next = (data && data[c]) || {};
+      if (JSON.stringify(next) !== JSON.stringify(cur[c])) { cur[c] = next; emit(c); }
+    });
+  }
+  function write(col, id, method, body) {
+    var p = chain.then(function () {
+      gen++;
+      return call(method, "/api/docs/" + col + "/" + encodeURIComponent(id), body).then(function (r) {
+        gen++;
+        if (r.doc === null) delete cur[col][id]; else cur[col][id] = r.doc;
+        emit(col);
+      });
+    });
+    chain = p.catch(function (e) { if (e && e.code === "unauthorized") lock(); });
+    return p;
+  }
+  function ref(col, id) {
+    return { id: id,
+      set: function (d) { return write(col, id, "PUT", d); },
+      update: function (d) { return write(col, id, "PATCH", d); },
+      "delete": function () { return write(col, id, "DELETE"); } };
+  }
+  function refresh() {
+    if (!started || !key || document.hidden) return;
+    var g = gen;
+    call("GET", "/api/data").then(function (r) {
+      if (g === gen) apply(r.data);
+      if (state.slow) { state.slow = false; render(); }
+    }, function (e) {
+      if (e.code === "unauthorized") lock();
+      else if (!state.slow) { state.slow = true; render(); }
+    });
+  }
+
+  function lock() {
+    key = ""; try { localStorage.removeItem("qmind-key"); } catch (e) {}
+    $("app").hidden = true; $("gate").hidden = false;
+  }
+  function unlock(data) {
+    $("gate").hidden = true; $("app").hidden = false;
+    apply(data);
+    if (started) return;
+    started = true; start();
+  }
+  $("form-gate").addEventListener("submit", async function (ev) {
+    ev.preventDefault();
+    var err = $("g-err"); err.hidden = true;
+    busy($("form-gate"), true);
+    try {
+      var k = await sha256($("g-pass").value.trim());
+      var r = await call("GET", "/api/data", undefined, k);
+      key = k; remember("qmind-key", k); $("g-pass").value = "";
+      unlock(r.data);
+    } catch (e) {
+      err.textContent = e && e.code === "unauthorized" ? "Incorrect password." : "Can't reach the database.";
+      err.hidden = false; $("g-pass").select();
+    }
+    busy($("form-gate"), false);
+  });
+  if (key) {
+    $("gate").hidden = true; $("app").hidden = false; render();
+    call("GET", "/api/data").then(function (r) { unlock(r.data); }, function (e) {
+      if (e.code === "unauthorized") lock(); else { state.phase = "unavailable"; render(); }
+    });
+  }
+
+  function start() {
+    state.db = {
+      doc: function (path) { var p = path.split("/"); return ref(p[0], p[1]); },
+      collection: function (col) {
+        return { doc: function (id) { return ref(col, id || uid()); },
+          onSnapshot: function (fn) { (subs[col] = subs[col] || []).push(fn); fn(snap(col)); } };
+      }
+    };
+    state.downloads = { save: async function (o) {
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([o.data], { type: "text/csv" }));
+      a.download = o.filename; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+    } };
+
+    var ready = false;
+    function docs(s) { return s.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }); }
+    function paint() { if (ready) render(); }
+    state.db.collection("projects").onSnapshot(function (s) {
+      state.projects = docs(s).sort(function (a, b) { return ((Number(a.order) || 0) - (Number(b.order) || 0)) || String(a.name || "").localeCompare(String(b.name || "")); });
+      paint();
+    });
+    state.db.collection("questions").onSnapshot(function (s) { state.questions = docs(s); paint(); });
+    state.db.collection("supervisors").onSnapshot(function (s) { state.sups = docs(s); paint(); });
+    state.db.collection("activity").onSnapshot(function (s) {
+      var m = {}; s.docs.forEach(function (d) { m[d.id] = arr((d.data() || {}).items); });
+      state.activity = m; paint();
+    });
+
+    var wanted = recall("qmind-view");
+    if (wanted && (VIEWS[wanted] || projectById(wanted))) state.view = wanted;
+    state.phase = "ready"; ready = true; render();
+    setInterval(refresh, 20000);
+    document.addEventListener("visibilitychange", refresh);
+  }
+})();
+</script>
+</body>
+</html>

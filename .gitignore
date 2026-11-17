@@ -1,0 +1,9 @@
+# Files that contain project data or are not part of the site
+qmind-dashboard*.html
+qmind-studievragen.html
+*.pdf
+
+# Worker
+node_modules/
+.wrangler/
+.dev.vars

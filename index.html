@@ -898,7 +898,8 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
       if (editProject) { await state.db.doc("projects/" + editProject).update(data); logAct("Edited project " + data.name); }
       else {
         data.order = state.projects.reduce(function (m, p) { return Math.max(m, Number(p.order) || 0); }, 0) + 1;
-        data.createdAt = now; data.sections = []; data.variables = [];
+        data.createdAt = now; data.variables = [];
+        data.sections = ["Imaging", "Already segmented", "Still needed for segmentation"].map(function (t) { return { id: uid(), title: t, body: "" }; });
         var ref = state.db.collection("projects").doc();
         await ref.set(data); logAct("Added project " + data.name);
         state.view = ref.id; state.ptab = "dataset"; remember("qmind-view", ref.id);

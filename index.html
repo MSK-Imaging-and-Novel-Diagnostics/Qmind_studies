@@ -158,6 +158,8 @@ select.inline { width: auto; padding: 4px 8px; font-size: 13px; }
 .dot.open, .bar .open { background: var(--ok); }
 .dot.toegewezen, .bar .toegewezen { background: var(--brand); }
 .dot.afgerond, .bar .afgerond { background: var(--muted); }
+.dot.gesloten, .bar .gesloten { background: var(--muted); opacity: .35; }
+.row.gesloten .title { color: var(--muted); }
 .st { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); white-space: nowrap; }
 .bar { display: flex; gap: 2px; height: 6px; border-radius: 3px; overflow: hidden; background: var(--soft); min-width: 60px; }
 .bar span { display: block; height: 100%; }
@@ -320,7 +322,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     <p class="grp">Planning</p>
     <div class="cols three">
       <div class="field"><label for="q-status">Status</label>
-        <select id="q-status"><option value="open">Open</option><option value="toegewezen">Assigned</option><option value="afgerond">Completed</option></select></div>
+        <select id="q-status"><option value="gesloten">Closed</option><option value="open">Open</option><option value="toegewezen">Assigned</option><option value="afgerond">Completed</option></select></div>
       <div class="field"><label for="q-assignee">Assigned to</label><input type="text" id="q-assignee" maxlength="80" autocomplete="off" list="names-assignee"></div>
       <div class="field"><label for="q-supervisor">Supervisor / PI</label><input type="text" id="q-supervisor" required maxlength="80" autocomplete="off" list="names-supervisor"></div>
     </div>
@@ -434,9 +436,9 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
 <script>
 (function () {
   "use strict";
-  var STATUS = { open: "Open", toegewezen: "Assigned", afgerond: "Completed" };
-  var KEYS = ["open", "toegewezen", "afgerond"];
-  var ORDER = { open: 0, toegewezen: 1, afgerond: 2 };
+  var STATUS = { gesloten: "Closed", open: "Open", toegewezen: "Assigned", afgerond: "Completed" };
+  var KEYS = ["open", "toegewezen", "afgerond", "gesloten"];
+  var ORDER = { open: 0, toegewezen: 1, gesloten: 2, afgerond: 3 };
   var PRIO = { high: "High", medium: "Medium", low: "Low" };
   var PRANK = { high: 0, medium: 1, "": 2, low: 3 };
   var EFFORT = { S: "Small", M: "Medium", L: "Large" };
@@ -492,7 +494,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
   function qProjectNames(q) { return qProjectIds(q).map(function (id) { return projectById(id).name || "Untitled"; }).join(" + "); }
   function questionsOf(pid) { return state.questions.filter(function (q) { return qProjectIds(q).indexOf(pid) !== -1; }); }
   function liveQs() { return state.questions.filter(function (q) { return qProjectIds(q).length; }); }
-  function countBy(qs) { var c = { open: 0, toegewezen: 0, afgerond: 0 }; qs.forEach(function (q) { c[statusOf(q)]++; }); return c; }
+  function countBy(qs) { var c = { open: 0, toegewezen: 0, afgerond: 0, gesloten: 0 }; qs.forEach(function (q) { c[statusOf(q)]++; }); return c; }
   function sortQs(qs) {
     return qs.slice().sort(function (a, b) {
       return (ORDER[statusOf(a)] - ORDER[statusOf(b)]) || (PRANK[a.priority || ""] - PRANK[b.priority || ""]) ||
@@ -516,7 +518,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
   function checksDone(q) { var c = q.checks || {}; return (c.ethics ? 1 : 0) + (c.access ? 1 : 0) + (c.agreement ? 1 : 0); }
   function flagsOf(q) {
     var f = [], s = statusOf(q);
-    if (s === "afgerond") return f;
+    if (s === "afgerond" || s === "gesloten") return f;
     if (q.endDate && q.endDate < today()) f.push({ t: "Overdue since " + day(q.endDate), warn: 1 });
     if (s === "toegewezen") {
       var d = daysSince(lastTouch(q));
@@ -543,7 +545,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
   }
   function supDoc(name) { return state.sups.find(function (s) { return String(s.name || "").toLowerCase() === String(name).toLowerCase(); }); }
   function supLoad(name) {
-    var c = { open: 0, toegewezen: 0, afgerond: 0 };
+    var c = { open: 0, toegewezen: 0, afgerond: 0, gesloten: 0 };
     liveQs().forEach(function (q) { if (String(q.supervisor || "").toLowerCase() === name.toLowerCase()) c[statusOf(q)]++; });
     var d = supDoc(name), cap = d && d.capacity != null && d.capacity !== "" ? Number(d.capacity) : null;
     return { c: c, cap: cap, full: cap != null && c.toegewezen >= cap };
@@ -594,8 +596,8 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     return h("section", { "class": "sec" }, h("div", { "class": "sechead" }, h("h2", { text: title }), right || null), Array.prototype.slice.call(arguments, 2));
   }
   function bar(c) {
-    var total = c.open + c.toegewezen + c.afgerond;
-    var el = h("div", { "class": "bar", role: "img", "aria-label": c.open + " open, " + c.toegewezen + " assigned, " + c.afgerond + " completed" });
+    var total = c.open + c.toegewezen + c.afgerond + c.gesloten;
+    var el = h("div", { "class": "bar", role: "img", "aria-label": c.open + " open, " + c.toegewezen + " assigned, " + c.afgerond + " completed, " + c.gesloten + " closed" });
     if (total) KEYS.forEach(function (k) { if (c[k]) { var s = h("span", { "class": k }); s.style.width = (c[k] / total * 100) + "%"; el.append(s); } });
     return el;
   }
@@ -627,6 +629,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
         acts.push(tbtn("Release", function () { patchQuestion(q.id, { status: "open", assignee: "" }, "Released “" + clip(q.title, 70) + "”"); }));
         acts.push(tbtn("Note", function () { openQuestion(q, { focus: "q-newnote" }); }));
       }
+      if (s === "gesloten") acts.push(tbtn("Open", function () { patchQuestion(q.id, { status: "open" }, "Opened “" + clip(q.title, 70) + "”"); }));
       if (s === "afgerond") acts.push(tbtn("Reopen", function () { patchQuestion(q.id, { status: q.assignee ? "toegewezen" : "open" }, "Reopened “" + clip(q.title, 70) + "”"); }));
       if (state.sample || q.proposal) acts.push(tbtn("Proposal", function () { openProposal(q); }));
       acts.push(tbtn("Edit", function () { openQuestion(q); }));
@@ -651,12 +654,12 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
       return h("div", { "class": "fig" }, h("b", { text: String(c[k]) }), h("span", null, h("span", { "class": "dot " + k }), STATUS[k]));
     }));
     var tbl = h("div", { "class": "tblwrap" }, h("table", null,
-      h("thead", null, h("tr", null, h("th", { text: "Project" }), h("th", { text: "" }), h("th", { "class": "r", text: "Open" }), h("th", { "class": "r", text: "Assigned" }), h("th", { "class": "r", text: "Completed" }))),
+      h("thead", null, h("tr", null, h("th", { text: "Project" }), h("th", { text: "" }), h("th", { "class": "r", text: "Open" }), h("th", { "class": "r", text: "Assigned" }), h("th", { "class": "r", text: "Completed" }), h("th", { "class": "r", text: "Closed" }))),
       h("tbody", null, ps.map(function (p) {
         var pc = countBy(questionsOf(p.id));
         return h("tr", { "class": "click", onclick: function () { go(p.id); } },
           h("td", null, h("b", { text: p.name || "Untitled" })), h("td", { style: "width:40%" }, bar(pc)),
-          h("td", { "class": "r num", text: String(pc.open) }), h("td", { "class": "r num", text: String(pc.toegewezen) }), h("td", { "class": "r num", text: String(pc.afgerond) }));
+          h("td", { "class": "r num", text: String(pc.open) }), h("td", { "class": "r num", text: String(pc.toegewezen) }), h("td", { "class": "r num", text: String(pc.afgerond) }), h("td", { "class": "r num", text: String(pc.gesloten) }));
       }))));
     var att = [];
     live.forEach(function (q) {

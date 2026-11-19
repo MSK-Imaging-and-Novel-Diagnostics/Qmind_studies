@@ -66,6 +66,8 @@ a { color: inherit; text-underline-offset: 3px; }
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 .gate .logo { width: 168px; height: 168px; background: var(--plate); border-radius: 12px; padding: 8px; }
+.gate .hero { width: min(560px, 100%); height: auto; border-radius: 10px; }
+.pimg { display: block; width: min(720px, 100%); height: auto; border-radius: 10px; }
 .gate form { display: flex; gap: 8px; width: min(340px, 100%); }
 .gate p { max-width: 380px; text-align: center; overflow-wrap: anywhere; }
 .mail { color: var(--fg); user-select: all; }
@@ -232,6 +234,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
 
 <section class="gate" id="gate">
   <img class="logo" src="qmind_logo.png" alt="Q-MIND, Quantitative Musculoskeletal Imaging and Novel Diagnostics">
+  <img class="hero" src="v1.4_figure.gif" width="900" height="556" alt="Rotating whole-body MRI and CT muscle segmentations, with axial views at the neck, thorax, abdomen, hip, thigh and leg">
   <form id="form-gate">
     <input type="password" id="g-pass" required autocomplete="current-password" placeholder="Password" aria-label="Password">
     <button type="submit" class="btn primary">Open</button>
@@ -264,6 +267,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     <div class="field"><label for="p-dataset">Dataset description</label><textarea id="p-dataset" rows="7"></textarea></div>
     <div class="field"><label for="p-collab">Primary collaborators (one per line)</label><textarea id="p-collab" rows="3"></textarea></div>
     <div class="field"><label for="p-owner">Data owner</label><input type="text" id="p-owner" maxlength="200" autocomplete="off"></div>
+    <div class="field"><label for="p-image">Image (link or file name)</label><input type="text" id="p-image" maxlength="300" autocomplete="off"></div>
     <div class="field"><label for="p-url">Primary article (link or DOI)</label><input type="text" id="p-url" maxlength="300" autocomplete="off"></div>
     <div class="field"><label for="p-urllabel">Link text</label><input type="text" id="p-urllabel" maxlength="80" autocomplete="off" placeholder="Study protocol"></div>
     <p class="err" id="p-err" hidden></p>
@@ -793,7 +797,9 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     }));
     var right = ro ? null : [tbtn("Edit", function () { openProject(p); }), tbtn("Delete", function () { askDeleteProject(p.id); }, "danger")];
     var purl = linkFor(p.primaryUrl), plabel = p.primaryLabel || "Study protocol";
+    var pimg = /^(https:\/\/[^\s"'<>]+|[\w.\-\/]+\.(gif|png|jpe?g|webp|svg))$/i.test(p.image || "") ? p.image : "";
     var intro = h("div", { "class": "sec" },
+      pimg ? h("img", { "class": "pimg", src: pimg, alt: "" }) : null,
       p.dataset ? h("p", { "class": "prose", text: p.dataset }) : h("p", { "class": "muted", text: "No description yet." }),
       p.primaryUrl ? h("p", null, purl ? h("a", { href: purl, target: "_blank", rel: "noopener noreferrer", text: plabel })
                                        : plabel + ": " + p.primaryUrl) : null,
@@ -888,6 +894,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     $("p-name").value = p ? (p.name || "") : ""; $("p-dataset").value = p ? (p.dataset || "") : "";
     $("p-url").value = p ? (p.primaryUrl || "") : ""; $("p-urllabel").value = p ? (p.primaryLabel || "") : "";
     $("p-collab").value = p ? arr(p.collaborators).join("\n") : ""; $("p-owner").value = p ? (p.dataOwner || "") : "";
+    $("p-image").value = p ? (p.image || "") : "";
     $("p-err").hidden = true; $("dlg-project").showModal();
   }
   $("form-project").addEventListener("submit", function (ev) {
@@ -895,7 +902,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     var now = nowIso(), data = { name: $("p-name").value.trim(), dataset: $("p-dataset").value.trim(),
       primaryUrl: $("p-url").value.trim(), primaryLabel: $("p-urllabel").value.trim(),
       collaborators: $("p-collab").value.split("\n").map(function (s) { return s.trim(); }).filter(Boolean),
-      dataOwner: $("p-owner").value.trim(), updatedAt: now };
+      dataOwner: $("p-owner").value.trim(), image: $("p-image").value.trim(), updatedAt: now };
     if (!data.name) return;
     submit(ev.currentTarget, "p-err", async function () {
       if (editProject) { await state.db.doc("projects/" + editProject).update(data); logAct("Edited project " + data.name); }

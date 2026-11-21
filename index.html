@@ -138,6 +138,8 @@ textarea { resize: vertical; min-height: 60px; }
 select.inline { width: auto; padding: 4px 8px; font-size: 13px; }
 input.inline { width: min(240px, 100%); padding: 4px 8px; font-size: 13px; }
 a.tbtn { text-decoration: none; }
+.btn.sm { padding: 4px 11px; font-size: 13px; font-weight: 600; }
+.row .acts { align-items: center; }
 
 /* View */
 .view { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
@@ -739,8 +741,8 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
         h("p", { "class": "meta", text: a.authors || "" }),
         h("p", { "class": "meta", text: cite }),
         h("div", { "class": "acts" },
+          art.canMark && a.unread ? h("button", { type: "button", "class": "btn sm", onclick: function () { markArticle(a, true); } }, "✓ Mark as read") : null,
           a.doi ? h("a", { "class": "tbtn", href: "https://doi.org/" + a.doi, target: "_blank", rel: "noopener noreferrer", text: "Full text" }) : null,
-          art.canMark && a.unread ? tbtn("Mark as read", function () { markArticle(a, true); }) : null,
           art.canMark && !a.unread && daysSince(a.found) < 7 ? tbtn("Mark as unread", function () { markArticle(a, false); }) : null));
     }));
     var more = art.loaded && art.items.length < art.total ? h("div", null, h("button", { type: "button", "class": "btn", disabled: art.loading, onclick: function () { loadArticles(true); } }, "Show more")) : null;

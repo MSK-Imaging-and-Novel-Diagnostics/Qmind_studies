@@ -162,8 +162,31 @@ export async function articlesApi(req, env, viewer, path, json) {
     });
   }
 
+  // The search in use, plus the feedback named viewers left on it.
+  if (path === "/api/articles/search" && req.method === "GET") {
+    let feedback = [];
+    if (viewer.admin) {
+      feedback = (await env.DB.prepare("SELECT id, author, text, created_at FROM article_feedback ORDER BY created_at DESC, id DESC LIMIT 200").all()).results;
+    }
+    return json({ term: SEARCH_TERM, version: SEARCH_VERSION, topic: TOPIC, canComment: viewer.admin, feedback });
+  }
+
   if (!viewer.admin) return json({ error: "forbidden" }, 403);
   const now = new Date().toISOString();
+
+  if (path === "/api/articles/feedback" && req.method === "POST") {
+    let text = "";
+    try { text = String((await req.json()).text || "").trim(); } catch (e) {}
+    if (!text || text.length > 4000) return json({ error: "bad_request" }, 400);
+    await env.DB.prepare("INSERT INTO article_feedback (author, text, created_at, search_version) VALUES (?1, ?2, ?3, ?4)")
+      .bind(reader, text, now, SEARCH_VERSION).run();
+    return json({ ok: true });
+  }
+  const fb = /^\/api\/articles\/feedback\/(\d{1,9})$/.exec(path);
+  if (fb && req.method === "DELETE") {
+    await env.DB.prepare("DELETE FROM article_feedback WHERE id = ?1 AND author = ?2").bind(Number(fb[1]), reader).run();
+    return json({ ok: true });
+  }
 
   if (path === "/api/articles/read-all" && req.method === "POST") {
     await env.DB.prepare(

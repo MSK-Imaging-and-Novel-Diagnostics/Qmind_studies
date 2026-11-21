@@ -78,6 +78,7 @@ The Related articles page lists PubMed articles found by a search that runs insi
 - **Nightly run**: asks PubMed for everything added in the last 30 days, and stores the articles that are not in the `articles` table yet. No abstracts are stored.
 - **Unread**: an article is unread for 7 days after it was found. People with a personal password can mark it as read sooner; this is stored per person in `article_reads`. With the shared password the same list is shown as "New", without read marks.
 - **Status**: `article_meta` holds the time of the last successful run and the last error. The page shows "Last update failed" when the last run went wrong.
+- **Feedback on the search**: the "Search string" button shows the search in use. People with a personal password can leave feedback there; it is stored in `article_feedback` and returned by `GET /api/articles/search`.
 - **Run it now**: `POST /api/articles/refresh` with a personal password.
 - **Fill from scratch or after changing the search**: `node tools/backfill_articles.mjs out.sql`, then in `worker/`: `npx wrangler d1 execute qmind --remote --file ../out.sql`. This fetches all years and takes about half an hour.
 

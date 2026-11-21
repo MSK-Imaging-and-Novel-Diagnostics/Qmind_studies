@@ -34,3 +34,11 @@ CREATE TABLE IF NOT EXISTS article_meta (
   key   TEXT PRIMARY KEY,
   value TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS article_feedback (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  author         TEXT NOT NULL,
+  text           TEXT NOT NULL,
+  created_at     TEXT NOT NULL,
+  search_version INTEGER
+);

@@ -139,6 +139,9 @@ select.inline { width: auto; padding: 4px 8px; font-size: 13px; }
 input.inline { width: min(240px, 100%); padding: 4px 8px; font-size: 13px; }
 a.tbtn { text-decoration: none; }
 .btn.sm { padding: 4px 11px; font-size: 13px; font-weight: 600; }
+.btn.mark { background: rgb(245 205 70 / 0.28); border-color: rgb(214 170 30 / 0.55); }
+.btn.mark:hover { background: rgb(245 205 70 / 0.42); }
+.term { font: 12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 38vh; overflow-y: auto; padding: 12px; border: 1px solid var(--line); border-radius: 8px; margin: 0; }
 .row .acts { align-items: center; }
 
 /* View */
@@ -383,6 +386,20 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
       <button type="button" class="tbtn" id="q-overlap" hidden>Check overlap</button>
       <span class="spacer"></span><button type="button" class="tbtn danger" id="q-delete">Delete</button>
     </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-search" aria-labelledby="ds-h">
+  <form class="dbody" id="form-feedback">
+    <h2 id="ds-h">Search string</h2>
+    <p class="small muted" id="s-info"></p>
+    <pre class="term" id="s-term"></pre>
+    <div id="grp-feedback" hidden>
+      <div class="field"><label for="s-text">Feedback</label><textarea id="s-text" rows="3" maxlength="4000"></textarea></div>
+      <ul class="list" id="s-list" style="margin-top:12px"></ul>
+    </div>
+    <p class="err" id="s-err" hidden></p>
+    <div class="dacts"><button type="submit" class="btn primary" id="s-send" hidden>Send feedback</button><button type="button" class="btn" data-close>Close</button></div>
   </form>
 </dialog>
 
@@ -721,6 +738,32 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
       render();
     }, function () { state.flash = "Save failed. Try again."; render(); });
   }
+  function showSearch(r) {
+    $("s-term").textContent = String(r.term || "").replace(/ (OR|AND|NOT) /g, "\n$1 ");
+    $("s-info").textContent = "PubMed, every night. Version " + r.version + ".";
+    $("grp-feedback").hidden = !r.canComment; $("s-send").hidden = !r.canComment;
+    var list = $("s-list"); list.replaceChildren();
+    arr(r.feedback).forEach(function (f) {
+      list.append(h("li", null, h("b", { text: f.author || "" }), h("span", { "class": "who", text: day(f.created_at) }), String(f.text || ""),
+        f.author === state.myName ? h("div", { "class": "acts" }, tbtn("Remove", function () {
+          call("DELETE", "/api/articles/feedback/" + f.id).then(openSearch, function () { showErr("s-err", "Remove failed. Try again."); });
+        }, "danger")) : null));
+    });
+  }
+  function openSearch() {
+    $("s-err").hidden = true;
+    call("GET", "/api/articles/search").then(function (r) { showSearch(r); if (!$("dlg-search").open) $("dlg-search").showModal(); },
+      function () { state.flash = "Can't load the search string."; render(); });
+  }
+  $("form-feedback").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var text = $("s-text").value.trim(); if (!text) return;
+    $("s-err").hidden = true; busy(ev.currentTarget, true);
+    var form = ev.currentTarget;
+    call("POST", "/api/articles/feedback", { text: text }).then(function () { $("s-text").value = ""; busy(form, false); openSearch(); },
+      function () { busy(form, false); showErr("s-err", "Send failed. Try again."); });
+  });
+
   function viewArticles() {
     var newLabel = art.canMark ? "Unread" : "New";
     var filters = h("div", { "class": "filters" }, [["unread", newLabel + " " + art.unread], ["all", "All"]].map(function (f) {
@@ -728,9 +771,10 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     }));
     var input = h("input", { type: "search", "class": "inline", placeholder: "Search articles", "aria-label": "Search articles", value: art.q });
     var form = h("form", { "class": "filters", onsubmit: function (ev) { ev.preventDefault(); art.q = input.value.trim(); loadArticles(); } }, input);
-    var right = art.canMark && art.unread && art.filter === "unread" && !art.q ? tbtn("Mark all as read", function () {
-      call("POST", "/api/articles/read-all").then(function () { loadArticles(); }, function () { state.flash = "Save failed. Try again."; render(); });
-    }) : null;
+    var right = [h("button", { type: "button", "class": "btn", onclick: openSearch }, "Search string"),
+      art.canMark && art.unread && art.filter === "unread" && !art.q ? tbtn("Mark all as read", function () {
+        call("POST", "/api/articles/read-all").then(function () { loadArticles(); }, function () { state.flash = "Save failed. Try again."; render(); });
+      }) : null];
     var list;
     if (!art.loaded) list = h("p", { "class": "empty", text: art.failed ? "Can't load the articles." : "Loading…" });
     else if (!art.items.length) list = h("p", { "class": "empty", text: art.q ? "No articles match." : art.filter === "unread" ? "Nothing new." : "No articles yet." });
@@ -741,7 +785,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
         h("p", { "class": "meta", text: a.authors || "" }),
         h("p", { "class": "meta", text: cite }),
         h("div", { "class": "acts" },
-          art.canMark && a.unread ? h("button", { type: "button", "class": "btn sm", onclick: function () { markArticle(a, true); } }, "✓ Mark as read") : null,
+          art.canMark && a.unread ? h("button", { type: "button", "class": "btn sm mark", onclick: function () { markArticle(a, true); } }, "✓ Mark as read") : null,
           a.doi ? h("a", { "class": "tbtn", href: "https://doi.org/" + a.doi, target: "_blank", rel: "noopener noreferrer", text: "Full text" }) : null,
           art.canMark && !a.unread && daysSince(a.found) < 7 ? tbtn("Mark as unread", function () { markArticle(a, false); }) : null));
     }));

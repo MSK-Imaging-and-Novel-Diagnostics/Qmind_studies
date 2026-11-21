@@ -138,6 +138,10 @@ textarea { resize: vertical; min-height: 60px; }
 select.inline { width: auto; padding: 4px 8px; font-size: 13px; }
 input.inline { width: min(240px, 100%); padding: 4px 8px; font-size: 13px; }
 a.tbtn { text-decoration: none; }
+.tag { font-size: 11.5px; font-weight: 600; letter-spacing: .02em; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--brand); color: var(--brand); white-space: nowrap; vertical-align: 2px; margin-left: 8px; }
+.refs { list-style: none; padding: 0; margin: 2px 0 0; display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
+.refs li { display: flex; flex-wrap: wrap; gap: 2px 10px; align-items: baseline; overflow-wrap: anywhere; }
+.term h3 { font: 600 13px var(--body); margin: 0 0 4px; }
 .btn.sm { padding: 4px 11px; font-size: 13px; font-weight: 600; }
 .btn.mark { background: rgb(245 205 70 / 0.28); border-color: rgb(214 170 30 / 0.55); }
 .btn.mark:hover { background: rgb(245 205 70 / 0.42); }
@@ -389,11 +393,21 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
   </form>
 </dialog>
 
+<dialog id="dlg-link" class="narrow" aria-labelledby="dl-h">
+  <form class="dbody" id="form-link">
+    <h2 id="dl-h">Link article</h2>
+    <p class="small muted" id="l-title"></p>
+    <div class="field"><label for="l-target">Link to</label><select id="l-target" required></select></div>
+    <p class="err" id="l-err" hidden></p>
+    <div class="dacts"><button type="submit" class="btn primary">Link</button><button type="button" class="btn" data-close>Cancel</button></div>
+  </form>
+</dialog>
+
 <dialog id="dlg-search" aria-labelledby="ds-h">
   <form class="dbody" id="form-feedback">
     <h2 id="ds-h">Search string</h2>
     <p class="small muted" id="s-info"></p>
-    <pre class="term" id="s-term"></pre>
+    <div class="term" id="s-term"></div>
     <div id="grp-feedback" hidden>
       <div class="field"><label for="s-text">Feedback</label><textarea id="s-text" rows="3" maxlength="4000"></textarea></div>
       <ul class="list" id="s-list" style="margin-top:12px"></ul>
@@ -586,7 +600,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     Object.keys(VIEWS).forEach(function (v) {
       nav.append(h("button", { type: "button", "class": "navitem", "aria-current": state.view === v && !state.query ? "page" : null, onclick: function () { go(v); } },
         h("span", { text: VIEWS[v] }), v === "open" && ready ? h("span", { "class": "n", text: String(openN) }) : null,
-        v === "articles" && art.unread ? h("span", { "class": "n", text: String(art.unread) }) : null));
+        v === "articles" && art.unreadAll ? h("span", { "class": "n", text: String(art.unreadAll) }) : null));
     });
     nav.append(h("span", { "class": "navhead", text: "Projects" }));
     state.projects.forEach(function (p) {
@@ -671,6 +685,14 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
       s === "afgerond" && q.outcome ? h("p", { "class": "out", text: q.outcome }) : null,
       s === "afgerond" && q.outputUrl ? h("p", { "class": "meta" }, url ? h("a", { href: url, target: "_blank", rel: "noopener noreferrer", text: q.outputUrl }) : String(q.outputUrl)) : null,
       last && s !== "afgerond" ? h("p", { "class": "meta", text: day(last.at) + ": " + clip(last.text, 160) }) : null,
+      arr(q.refs).length ? h("ul", { "class": "refs" }, arr(q.refs).map(function (r) {
+        var ru = linkFor(r.url);
+        return h("li", null, ru ? h("a", { href: ru, target: "_blank", rel: "noopener noreferrer", text: r.title || "Article" }) : String(r.title || ""),
+          h("span", { "class": "muted", text: [r.journal, r.year].filter(Boolean).join(" ") }),
+          ro ? null : tbtn("Unlink", function () {
+            patchQuestion(q.id, { refs: arr(q.refs).filter(function (x) { return x.url !== r.url; }) }, "Unlinked an article from “" + clip(q.title, 70) + "”");
+          }));
+      })) : null,
       acts.length ? h("div", { "class": "acts" }, acts) : null);
   }
 
@@ -719,27 +741,77 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     });
   }
 
-  // ---------- Related articles (nightly PubMed search, stored in the database) ----------
-  var art = { items: [], total: 0, unread: 0, filter: "unread", q: "", canMark: false, loading: false, loaded: false, failed: false, error: "", seq: 0 };
+  // ---------- Related articles (nightly PubMed searches, stored in the database) ----------
+  var art = { items: [], total: 0, unread: 0, unreadAll: 0, saved: 0, own: 0, topics: [], topic: "", filter: "unread", q: "",
+    canMark: false, loading: false, loaded: false, failed: false, error: "", seq: 0 };
   function loadArticles(more) {
     var seq = ++art.seq, offset = more ? art.items.length : 0;
     art.loading = true; if (state.view === "articles") render();
-    call("GET", "/api/articles?filter=" + art.filter + "&q=" + encodeURIComponent(art.q) + "&offset=" + offset + "&limit=50").then(function (r) {
+    call("GET", "/api/articles?filter=" + art.filter + "&topic=" + encodeURIComponent(art.topic) + "&q=" + encodeURIComponent(art.q) + "&offset=" + offset + "&limit=50").then(function (r) {
       if (seq !== art.seq) return;
       art.items = more ? art.items.concat(r.items) : r.items;
-      art.total = r.total; art.unread = r.unread; art.canMark = !!r.canMark; art.error = r.error || "";
+      art.total = r.total; art.unread = r.unread; art.unreadAll = r.unreadAll; art.saved = r.saved; art.own = r.own; art.topics = arr(r.topics);
+      art.canMark = !!r.canMark; art.error = r.error || "";
       art.loading = false; art.loaded = true; art.failed = false; render();
     }, function () { if (seq !== art.seq) return; art.loading = false; art.failed = true; render(); });
   }
+  function artFail() { state.flash = "Save failed. Try again."; render(); }
   function markArticle(a, read) {
     call(read ? "PUT" : "DELETE", "/api/articles/" + a.pmid + "/read").then(function () {
-      a.unread = !read; art.unread = Math.max(0, art.unread + (read ? -1 : 1));
+      a.unread = !read; art.unread = Math.max(0, art.unread + (read ? -1 : 1)); art.unreadAll = Math.max(0, art.unreadAll + (read ? -1 : 1));
       if (art.filter === "unread" && read) { art.items = art.items.filter(function (x) { return x !== a; }); art.total = Math.max(0, art.total - 1); }
       render();
-    }, function () { state.flash = "Save failed. Try again."; render(); });
+    }, artFail);
   }
+  function starArticle(a, on) {
+    call(on ? "PUT" : "DELETE", "/api/articles/" + a.pmid + "/star").then(function () {
+      a.saved = on; art.saved = Math.max(0, art.saved + (on ? 1 : -1));
+      if (art.filter === "saved" && !on) { art.items = art.items.filter(function (x) { return x !== a; }); art.total = Math.max(0, art.total - 1); }
+      render();
+    }, artFail);
+  }
+
+  // Link an article to a project (as a related study) or to a research question.
+  var linkArt = null;
+  function openLink(a) {
+    linkArt = a; $("l-title").textContent = a.title || ""; $("l-err").hidden = true;
+    var sel = $("l-target"); sel.replaceChildren(h("option", { value: "", text: "Choose…" }));
+    state.projects.forEach(function (p) {
+      var g = h("optgroup", { label: p.name || "Untitled" }, h("option", { value: "p:" + p.id, text: "Related studies of " + (p.name || "Untitled") }));
+      sortQs(state.questions.filter(function (q) { return q.projectId === p.id; })).forEach(function (q) { g.append(h("option", { value: "q:" + q.id, text: clip(q.title, 90) })); });
+      sel.append(g);
+    });
+    $("dlg-link").showModal();
+  }
+  $("form-link").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var v = $("l-target").value, a = linkArt; if (!v || !a) return;
+    var url = a.doi ? "https://doi.org/" + a.doi : "https://pubmed.ncbi.nlm.nih.gov/" + a.pmid + "/";
+    var journal = [a.journal, a.volume ? a.volume + (a.issue ? "(" + a.issue + ")" : "") + (a.pages ? ":" + a.pages : "") : ""].filter(Boolean).join(" ");
+    var same = function (x) { return x.pmid === a.pmid || x.url === url; };
+    submit(ev.currentTarget, "l-err", async function () {
+      if (v.slice(0, 2) === "p:") {
+        var p = projectById(v.slice(2)); if (!p) throw "That project no longer exists.";
+        if (arr(p.studies).some(same)) throw "Already in the related studies of " + (p.name || "this project") + ".";
+        await saveArray(p.id, "studies", function (list) {
+          return list.concat([{ id: uid(), pmid: a.pmid, title: a.title, authors: a.authors, journal: journal, year: String(a.year || ""), url: url, note: "" }]);
+        }, "Added related study “" + clip(a.title, 70) + "”");
+      } else {
+        var q = questionById(v.slice(2)); if (!q) throw "That question no longer exists.";
+        if (arr(q.refs).some(same)) throw "Already linked to this question.";
+        await state.db.doc("questions/" + q.id).update({ updatedAt: nowIso(),
+          refs: arr(q.refs).concat([{ pmid: a.pmid, title: a.title, journal: a.journal, year: String(a.year || ""), url: url }]) });
+        logAct("Linked an article to “" + clip(q.title, 70) + "”");
+      }
+    }, "dlg-link");
+  });
+
   function showSearch(r) {
-    $("s-term").textContent = String(r.term || "").replace(/ (OR|AND|NOT) /g, "\n$1 ");
+    var box = $("s-term"); box.replaceChildren();
+    arr(r.topics).forEach(function (t, i) {
+      box.append(h("h3", { text: t.label, style: i ? "margin-top:14px" : null }),
+        h("div", { text: String(t.term || "").replace(/ (OR|AND|NOT) /g, "\n$1 ") }));
+    });
     $("s-info").textContent = "PubMed, every night. Version " + r.version + ".";
     $("grp-feedback").hidden = !r.canComment; $("s-send").hidden = !r.canComment;
     var list = $("s-list"); list.replaceChildren();
@@ -765,27 +837,37 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
   });
 
   function viewArticles() {
-    var newLabel = art.canMark ? "Unread" : "New";
-    var filters = h("div", { "class": "filters" }, [["unread", newLabel + " " + art.unread], ["all", "All"]].map(function (f) {
+    var tabs = [["unread", (art.canMark ? "Unread" : "New") + " " + art.unread]];
+    if (art.canMark) tabs.push(["saved", "Reading list " + art.saved]);
+    tabs.push(["own", "Own work " + art.own], ["all", "All"]);
+    var filters = h("div", { "class": "filters" }, tabs.map(function (f) {
       return h("button", { type: "button", "class": "filter", "aria-pressed": String(art.filter === f[0]), onclick: function () { art.filter = f[0]; loadArticles(); } }, f[1]);
     }));
+    var topicSel = h("select", { "class": "inline", "aria-label": "Topic", onchange: function (ev) { art.topic = ev.currentTarget.value; loadArticles(); } },
+      h("option", { value: "", text: "All topics" }), art.topics.map(function (t) { return h("option", { value: t.id, text: t.label, selected: art.topic === t.id }); }));
     var input = h("input", { type: "search", "class": "inline", placeholder: "Search articles", "aria-label": "Search articles", value: art.q });
-    var form = h("form", { "class": "filters", onsubmit: function (ev) { ev.preventDefault(); art.q = input.value.trim(); loadArticles(); } }, input);
+    var form = h("form", { "class": "filters", onsubmit: function (ev) { ev.preventDefault(); art.q = input.value.trim(); loadArticles(); } }, topicSel, input);
     var right = [h("button", { type: "button", "class": "btn", onclick: openSearch }, "Search string"),
       art.canMark && art.unread && art.filter === "unread" && !art.q ? tbtn("Mark all as read", function () {
-        call("POST", "/api/articles/read-all").then(function () { loadArticles(); }, function () { state.flash = "Save failed. Try again."; render(); });
+        call("POST", "/api/articles/read-all?topic=" + encodeURIComponent(art.topic)).then(function () { loadArticles(); }, artFail);
       }) : null];
+    var label = {}; art.topics.forEach(function (t) { label[t.id] = t.label; });
+    var empty = { unread: "Nothing new.", saved: "Your reading list is empty.", own: "No own work in this topic.", all: "No articles yet." };
     var list;
     if (!art.loaded) list = h("p", { "class": "empty", text: art.failed ? "Can't load the articles." : "Loading…" });
-    else if (!art.items.length) list = h("p", { "class": "empty", text: art.q ? "No articles match." : art.filter === "unread" ? "Nothing new." : "No articles yet." });
+    else if (!art.items.length) list = h("p", { "class": "empty", text: art.q ? "No articles match." : empty[art.filter] });
     else list = h("div", { "class": "rows" }, art.items.map(function (a) {
-      var cite = [a.journal, a.year, a.volume ? a.volume + (a.issue ? "(" + a.issue + ")" : "") : "", a.pages].filter(Boolean).join("  ·  ");
+      var cite = [a.journal, a.year, a.volume ? a.volume + (a.issue ? "(" + a.issue + ")" : "") : "", a.pages].filter(Boolean)
+        .concat(art.topic ? [] : arr(a.topics).map(function (t) { return label[t]; }).filter(Boolean)).join("  ·  ");
       return h("article", { "class": "row" + (a.unread ? "" : " afgerond") },
-        h("span", { "class": "title" }, h("a", { href: "https://pubmed.ncbi.nlm.nih.gov/" + a.pmid + "/", target: "_blank", rel: "noopener noreferrer", text: a.title || "Untitled" })),
+        h("span", { "class": "title" }, h("a", { href: "https://pubmed.ncbi.nlm.nih.gov/" + a.pmid + "/", target: "_blank", rel: "noopener noreferrer", text: a.title || "Untitled" }),
+          a.own ? h("span", { "class": "tag", text: "Q-MIND" }) : null),
         h("p", { "class": "meta", text: a.authors || "" }),
         h("p", { "class": "meta", text: cite }),
         h("div", { "class": "acts" },
           art.canMark && a.unread ? h("button", { type: "button", "class": "btn sm mark", onclick: function () { markArticle(a, true); } }, "✓ Mark as read") : null,
+          art.canMark ? tbtn(a.saved ? "★ On reading list" : "☆ Reading list", function () { starArticle(a, !a.saved); }) : null,
+          state.readonly ? null : tbtn("Link", function () { openLink(a); }),
           a.doi ? h("a", { "class": "tbtn", href: "https://doi.org/" + a.doi, target: "_blank", rel: "noopener noreferrer", text: "Full text" }) : null,
           art.canMark && !a.unread && daysSince(a.found) < 7 ? tbtn("Mark as unread", function () { markArticle(a, false); }) : null));
     }));
@@ -945,7 +1027,10 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
   }
 
   // ---------- Writes ----------
+  // The document a dialog is editing, and the version it opened with (see write()).
+  var editBase = null;
   function errText(e) {
+    if (e && e.code === "conflict") return "Someone else changed this while you had it open. Close this, reopen it and make your change again.";
     if (e && e.code === "invalid_argument") { state.readonly = true; return "Save refused. You probably lack write access."; }
     if (e && e.code === "quota_exceeded") return "Storage is full. Delete old items first.";
     return "Save failed. Try again.";
@@ -989,6 +1074,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
   var editProject = null;
   function openProject(p) {
     editProject = p ? p.id : null;
+    editBase = p ? { path: "projects/" + p.id, at: String(p.updatedAt || "") } : null;
     $("dp-h").textContent = p ? "Edit project" : "Add project";
     $("p-name").value = p ? (p.name || "") : ""; $("p-dataset").value = p ? (p.dataset || "") : "";
     $("p-url").value = p ? (p.primaryUrl || "") : ""; $("p-urllabel").value = p ? (p.primaryLabel || "") : "";
@@ -1190,6 +1276,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
   }
   function openQuestion(q, opts) {
     opts = opts || {};
+    editBase = q ? { path: "questions/" + q.id, at: String(q.updatedAt || "") } : null;
     var src = q || opts.prefill || {};
     dq = { id: q ? q.id : null, projectId: q ? q.projectId : state.view, aiOverlap: false,
       applicants: q ? arr(q.applicants).map(function (a) { return Object.assign({}, a); }) : [] };
@@ -1364,6 +1451,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
   }
   $("sg-stop").addEventListener("click", function () { if (sgCtl) sgCtl.abort(); });
   $("sg-again").addEventListener("click", function () { runSuggest(true); });
+  ["dlg-question", "dlg-project"].forEach(function (id) { $(id).addEventListener("close", function () { editBase = null; }); });
   $("dlg-suggest").addEventListener("close", function () { if (sgCtl) sgCtl.abort(); });
 
   var prCtl = null, prId = null, prText = "";
@@ -1455,13 +1543,16 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     var buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
     return Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, "0"); }).join("");
   }
-  function call(method, path, body, k) {
+  function call(method, path, body, k, base) {
+    var headers = { "Authorization": "Bearer " + (k || key), "Content-Type": "application/json" };
+    if (base) headers["X-Base-Updated"] = base;
     return fetch(API + path, {
       method: method, cache: "no-store",
-      headers: { "Authorization": "Bearer " + (k || key), "Content-Type": "application/json" },
+      headers: headers,
       body: body === undefined ? undefined : JSON.stringify(body)
     }).then(function (r) {
       if (r.status === 401) throw { code: "unauthorized" };
+      if (r.status === 409) throw { code: "conflict" };
       if (!r.ok) throw { code: "unavailable" };
       return r.json();
     }, function () { throw { code: "offline" }; });
@@ -1481,7 +1572,9 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
   function write(col, id, method, body) {
     var p = chain.then(function () {
       gen++;
-      return call(method, "/api/docs/" + col + "/" + encodeURIComponent(id), body).then(function (r) {
+      var base = editBase && editBase.path === col + "/" + id && method !== "DELETE" ? editBase.at : "";
+      return call(method, "/api/docs/" + col + "/" + encodeURIComponent(id), body, null, base).then(function (r) {
+        if (base && editBase && r.doc) editBase.at = String(r.doc.updatedAt || "");
         gen++;
         if (r.doc === null) delete cur[col][id]; else cur[col][id] = r.doc;
         emit(col);

@@ -72,17 +72,25 @@ After a change, everyone has to enter their new password the next time they open
 
 ## Related articles
 
-The Related articles page lists PubMed articles found by a search that runs inside the Worker every night at 02:15 UTC (`[triggers]` in `wrangler.toml`).
+The Related articles page lists PubMed articles found by searches that run inside the Worker every night at 02:15 UTC (`[triggers]` in `wrangler.toml`).
 
-- **Search**: `SEARCH_TERM` in `worker/src/articles.js`. Currently body composition on MRI or CT (subcutaneous, visceral, intramuscular and intermuscular fat and related terms), humans only. Raise `SEARCH_VERSION` when you change it.
-- **Nightly run**: asks PubMed for everything added in the last 30 days, and stores the articles that are not in the `articles` table yet. No abstracts are stored.
-- **Unread**: an article is unread for 7 days after it was found. People with a personal password can mark it as read sooner; this is stored per person in `article_reads`. With the shared password the same list is shown as "New", without read marks.
+- **Topics**: `TOPICS` in `worker/src/articles.js`, one search each: body composition on MRI or CT, shape modelling of the knee, hip and ankle, and osteochondral lesions of the talus and ankle. Humans only. Raise `SEARCH_VERSION` when you change a search. An article can belong to several topics (`article_topics`).
+- **Nightly run**: per topic, asks PubMed for everything added in the last 30 days and stores the articles that are not in the `articles` table yet. No abstracts are stored.
+- **Unread**: an article is unread for 7 days after it was found. People with a personal password can mark it as read sooner (`article_reads`) and keep a reading list (`article_stars`); both are per person. With the shared password the same list is shown as "New", without marks.
+- **Own work**: articles with an author in `OWN_AUTHORS` get a Q-MIND label, come first under Unread and Reading list, and have their own tab.
+- **Linking**: "Link" on an article adds it to the related studies of a project, or to a research question (`refs` on the question).
+- **Feedback on the search**: the "Search string" button shows the searches in use. People with a personal password can leave feedback there; it is stored in `article_feedback` and returned by `GET /api/articles/search`.
 - **Status**: `article_meta` holds the time of the last successful run and the last error. The page shows "Last update failed" when the last run went wrong.
-- **Feedback on the search**: the "Search string" button shows the search in use. People with a personal password can leave feedback there; it is stored in `article_feedback` and returned by `GET /api/articles/search`.
 - **Run it now**: `POST /api/articles/refresh` with a personal password.
-- **Fill from scratch or after changing the search**: `node tools/backfill_articles.mjs out.sql`, then in `worker/`: `npx wrangler d1 execute qmind --remote --file ../out.sql`. This fetches all years and takes about half an hour.
+- **Fill a new topic, or refill after changing a search**: `node tools/backfill_articles.mjs out.sql [topic-id ...]`, then in `worker/`: `npx wrangler d1 execute qmind --remote --file ../out.sql`. All topics together take about half an hour.
+
+`worker/migrate_v2.sql` is a one-off for a database created before topics existed.
 
 Optional: set an `NCBI_API_KEY` secret to raise PubMed's rate limit. It is not needed for the nightly run.
+
+## Editing at the same time
+
+When a project or question dialog is saved, the page sends the version it opened with (`X-Base-Updated`). If someone else saved in the meantime, the API answers 409 and the dialog asks to reopen, instead of silently overwriting the other change.
 
 ## Testing locally
 

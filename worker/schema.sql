@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS articles (
   doi     TEXT NOT NULL DEFAULT '',
   ptypes  TEXT NOT NULL DEFAULT '',
   topic   TEXT NOT NULL DEFAULT '',
-  found   TEXT NOT NULL
+  found   TEXT NOT NULL,
+  own     INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS articles_found ON articles (found DESC, pmid DESC);
 
@@ -41,4 +42,18 @@ CREATE TABLE IF NOT EXISTS article_feedback (
   text           TEXT NOT NULL,
   created_at     TEXT NOT NULL,
   search_version INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS article_topics (
+  pmid  INTEGER NOT NULL,
+  topic TEXT NOT NULL,
+  PRIMARY KEY (pmid, topic)
+);
+CREATE INDEX IF NOT EXISTS article_topics_topic ON article_topics (topic, pmid);
+
+CREATE TABLE IF NOT EXISTS article_stars (
+  pmid       INTEGER NOT NULL,
+  reader     TEXT NOT NULL,
+  starred_at TEXT NOT NULL,
+  PRIMARY KEY (pmid, reader)
 );

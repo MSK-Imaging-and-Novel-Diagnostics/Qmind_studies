@@ -1,8 +1,9 @@
-// Related articles: a nightly PubMed search stored in D1, with a read state per named viewer.
+// Related articles: nightly PubMed searches stored in D1, with a read state and reading list per named viewer.
 
-// Raise SEARCH_VERSION after every change to the search, so it is clear which search filled the table.
-export const SEARCH_VERSION = 1;
-export const TOPIC = "body-composition";
+// Raise SEARCH_VERSION after every change to a search, so it is clear which searches filled the table.
+export const SEARCH_VERSION = 2;
+
+const HUMANS = " NOT (animals[mh] NOT humans[mh])";
 
 // Body composition on MRI or CT: subcutaneous, visceral, intramuscular and intermuscular fat, and related terms.
 const FAT =
@@ -18,7 +19,40 @@ const FAT =
 const IMAGING =
   '("Magnetic Resonance Imaging"[mh] OR "Tomography, X-Ray Computed"[mh] OR MRI[tiab] OR "magnetic resonance"[tiab] ' +
   'OR "computed tomography"[tiab] OR CT[tiab] OR Dixon[tiab])';
-export const SEARCH_TERM = FAT + " AND " + IMAGING + " NOT (animals[mh] NOT humans[mh])";
+
+// Shape modelling of the knee, hip and ankle.
+const SHAPE =
+  '("statistical shape"[tiab] OR "shape model"[tiab] OR "shape models"[tiab] OR "shape modeling"[tiab] OR "shape modelling"[tiab] ' +
+  'OR "active shape"[tiab] OR "neural shape"[tiab] OR "shape analysis"[tiab] OR "shape variation"[tiab] OR "shape variations"[tiab] ' +
+  'OR "bone shape"[tiab] OR "geometric morphometric"[tiab] OR "geometric morphometrics"[tiab] OR "statistical appearance"[tiab] ' +
+  'OR "shape score"[tiab] OR "B-score"[tiab])';
+const JOINTS =
+  '("Knee Joint"[mh] OR "Knee"[mh] OR "Hip Joint"[mh] OR "Hip"[mh] OR "Ankle Joint"[mh] OR "Ankle"[mh] OR "Femur"[mh] OR "Tibia"[mh] ' +
+  'OR "Patella"[mh] OR "Talus"[mh] OR "Acetabulum"[mh] OR "Pelvic Bones"[mh] ' +
+  'OR knee[tiab] OR knees[tiab] OR hip[tiab] OR hips[tiab] OR ankle[tiab] OR ankles[tiab] OR femur[tiab] OR femoral[tiab] ' +
+  'OR tibia[tiab] OR tibial[tiab] OR patella[tiab] OR patellar[tiab] OR patellofemoral[tiab] OR tibiofemoral[tiab] ' +
+  'OR talus[tiab] OR talar[tiab] OR calcaneus[tiab] OR acetabulum[tiab] OR acetabular[tiab] OR femoroacetabular[tiab] ' +
+  'OR trochlea[tiab] OR trochlear[tiab] OR subtalar[tiab] OR hindfoot[tiab])';
+
+// Osteochondral lesions of the talus and ankle.
+const OCL =
+  '("osteochondral lesion"[tiab] OR "osteochondral lesions"[tiab] OR "osteochondral defect"[tiab] OR "osteochondral defects"[tiab] ' +
+  'OR "osteochondritis dissecans"[tiab] OR "Osteochondritis Dissecans"[mh] OR "osteochondral injury"[tiab] OR "osteochondral injuries"[tiab] ' +
+  'OR "osteochondral fracture"[tiab] OR "osteochondral fractures"[tiab] OR "cartilage lesion"[tiab] OR "cartilage lesions"[tiab] ' +
+  'OR "chondral lesion"[tiab] OR "chondral lesions"[tiab] OR "cartilage defect"[tiab] OR "cartilage defects"[tiab] OR OLT[tiab] OR OCD[tiab])';
+const TALUS = '("Talus"[mh] OR talus[tiab] OR talar[tiab] OR "talar dome"[tiab] OR "Ankle Joint"[mh] OR ankle[tiab] OR tibiotalar[tiab])';
+
+export const TOPICS = [
+  { id: "body-composition", label: "Body composition", term: FAT + " AND " + IMAGING + HUMANS },
+  { id: "shape", label: "Shape modelling", term: SHAPE + " AND " + JOINTS + HUMANS },
+  { id: "talus-ocl", label: "Talus and osteochondral lesions", term: OCL + " AND " + TALUS + HUMANS },
+];
+const TOPIC_IDS = TOPICS.map((t) => t.id);
+
+// Articles by these authors are marked as the group's own work.
+// Full initials only: "Wesselink E" and "Beekman K" also match other researchers.
+export const OWN_AUTHORS = '("Wesselink EO"[au] OR "Hemke R"[au] OR "Beekman KM"[au])';
+const OWN_NAME = /^(wesselink eo|hemke r|beekman km)$/i;
 
 const EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/";
 const TOOL = "qmind-dashboard";
@@ -40,10 +74,18 @@ function clean(s) {
     .trim();
 }
 
+const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// PubMed allows 3 requests per second without a key, so space the requests and retry when it says "too many".
 export async function eutils(endpoint, params, apiKey) {
   const body = new URLSearchParams({ db: "pubmed", retmode: "json", tool: TOOL, ...params });
   if (apiKey) body.set("api_key", apiKey);
-  const r = await fetch(EUTILS + endpoint, { method: "POST", body });
+  let r;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await pause(attempt ? 1500 * attempt : 400);
+    r = await fetch(EUTILS + endpoint, { method: "POST", body: new URLSearchParams(body) });
+    if (r.status !== 429 && r.status < 500) break;
+  }
   if (!r.ok) throw new Error(endpoint + " HTTP " + r.status);
   const d = await r.json();
   const err = d.error || (d.esearchresult && d.esearchresult.ERROR);
@@ -70,6 +112,7 @@ export function toRow(r, found) {
     pages: clean(r.pages).slice(0, 60),
     doi: clean(doi).slice(0, 200),
     ptypes: (Array.isArray(r.pubtype) ? r.pubtype : []).join("; ").slice(0, 200),
+    own: authors.some((n) => OWN_NAME.test(String(n).trim())) ? 1 : 0,
     entrez: entrez.slice(0, 10).replace(/\//g, "-"),
     found,
   };
@@ -87,19 +130,23 @@ export async function summaries(pmids, apiKey) {
   return out;
 }
 
-const COLS = ["pmid", "title", "authors", "journal", "year", "pubdate", "volume", "issue", "pages", "doi", "ptypes", "topic", "found"];
+export const COLS = ["pmid", "title", "authors", "journal", "year", "pubdate", "volume", "issue", "pages", "doi", "ptypes", "own", "found"];
 
 async function setMeta(env, values) {
   const st = env.DB.prepare("INSERT INTO article_meta (key, value) VALUES (?1, ?2) ON CONFLICT (key) DO UPDATE SET value = excluded.value");
   await env.DB.batch(Object.entries(values).map(([k, v]) => st.bind(k, String(v))));
 }
 
-// The nightly run: everything PubMed added in the last 30 days that is not in the table yet.
+// The nightly run: per topic, everything PubMed added in the last 30 days that is not in the table yet.
 export async function ingest(env) {
   const now = new Date().toISOString();
   try {
-    const s = await eutils("esearch.fcgi", { term: SEARCH_TERM, reldate: String(DAILY_RELDATE), datetype: "edat", retmax: "2000", sort: "pub_date" }, env.NCBI_API_KEY);
-    const ids = (s.esearchresult.idlist || []).map(Number).filter(Boolean);
+    const pairs = [];
+    for (const t of TOPICS) {
+      const s = await eutils("esearch.fcgi", { term: t.term, reldate: String(DAILY_RELDATE), datetype: "edat", retmax: "2000", sort: "pub_date" }, env.NCBI_API_KEY);
+      for (const id of s.esearchresult.idlist || []) if (Number(id)) pairs.push([Number(id), t.id]);
+    }
+    const ids = [...new Set(pairs.map((p) => p[0]))];
     const known = new Set();
     for (let i = 0; i < ids.length; i += 90) {
       const part = ids.slice(i, i + 90);
@@ -110,7 +157,14 @@ export async function ingest(env) {
     const rows = (await summaries(fresh, env.NCBI_API_KEY)).map((r) => toRow(r, now));
     const st = env.DB.prepare("INSERT OR IGNORE INTO articles (" + COLS.join(", ") + ") VALUES (" + COLS.map((_, i) => "?" + (i + 1)).join(", ") + ")");
     for (let i = 0; i < rows.length; i += 40) {
-      await env.DB.batch(rows.slice(i, i + 40).map((r) => st.bind(...COLS.map((c) => (c === "topic" ? TOPIC : r[c])))));
+      await env.DB.batch(rows.slice(i, i + 40).map((r) => st.bind(...COLS.map((c) => r[c]))));
+    }
+    // Topic links, also for articles that were already stored under another topic.
+    const stored = new Set([...known, ...rows.map((r) => r.pmid)]);
+    const links = pairs.filter((p) => stored.has(p[0]));
+    for (let i = 0; i < links.length; i += 45) {
+      const part = links.slice(i, i + 45);
+      await env.DB.prepare("INSERT OR IGNORE INTO article_topics (pmid, topic) VALUES " + part.map(() => "(?, ?)").join(", ")).bind(...part.flat()).run();
     }
     await setMeta(env, { last_run: now, last_ok: now, last_added: rows.length, last_error: "", search_version: SEARCH_VERSION });
     return { ok: true, searched: ids.length, added: rows.length };
@@ -125,50 +179,67 @@ export async function ingest(env) {
 export async function articlesApi(req, env, viewer, path, json) {
   const reader = viewer.admin ? viewer.name : "";
   const cut = new Date(Date.now() - UNREAD_DAYS * 86400000).toISOString();
-  const UNREAD = "a.found >= ?1 AND NOT EXISTS (SELECT 1 FROM article_reads r WHERE r.pmid = a.pmid AND r.reader = ?2)";
+  // ?1 = cut-off for unread, ?2 = reader, ?3 = topic ("" for all)
+  const UNREAD = "(a.found >= ?1 AND NOT EXISTS (SELECT 1 FROM article_reads r WHERE r.pmid = a.pmid AND r.reader = ?2))";
+  const SAVED = "EXISTS (SELECT 1 FROM article_stars s WHERE s.pmid = a.pmid AND s.reader = ?2)";
+  const TOPIC = "(?3 = '' OR EXISTS (SELECT 1 FROM article_topics t WHERE t.pmid = a.pmid AND t.topic = ?3))";
 
   if (path === "/api/articles" && req.method === "GET") {
     const u = new URL(req.url).searchParams;
-    const filter = u.get("filter") === "all" ? "all" : "unread";
+    const filter = ["all", "saved", "own"].includes(u.get("filter")) ? u.get("filter") : "unread";
+    const topic = TOPIC_IDS.includes(u.get("topic")) ? u.get("topic") : "";
     const q = (u.get("q") || "").trim().slice(0, 100);
     const limit = Math.min(Math.max(parseInt(u.get("limit") || "50", 10) || 0, 0), 100);
     const offset = Math.max(parseInt(u.get("offset") || "0", 10) || 0, 0);
-    const where = [];
-    const args = [cut, reader];
+    const where = [TOPIC];
+    const args = [cut, reader, topic];
     if (filter === "unread") where.push(UNREAD);
+    if (filter === "saved") where.push(SAVED);
+    if (filter === "own") where.push("a.own = 1");
     if (q) {
       args.push("%" + q.replace(/[\\%_]/g, "\\$&") + "%");
-      where.push("(a.title LIKE ?3 ESCAPE '\\' OR a.authors LIKE ?3 ESCAPE '\\' OR a.journal LIKE ?3 ESCAPE '\\')");
+      where.push("(a.title LIKE ?4 ESCAPE '\\' OR a.authors LIKE ?4 ESCAPE '\\' OR a.journal LIKE ?4 ESCAPE '\\')");
     }
-    const w = where.length ? " WHERE " + where.join(" AND ") : "";
-    const [items, total, unread, meta] = await env.DB.batch([
+    const w = " WHERE " + where.join(" AND ");
+    // Own work first in the lists people work through; newest first everywhere.
+    const order = filter === "unread" || filter === "saved" ? "a.own DESC, a.found DESC, a.pmid DESC" : "a.found DESC, a.pmid DESC";
+    const [items, total, counts, meta] = await env.DB.batch([
       env.DB.prepare(
-        "SELECT a.pmid, a.title, a.authors, a.journal, a.year, a.pubdate, a.volume, a.issue, a.pages, a.doi, a.ptypes, a.found, " +
-        "(" + UNREAD + ") AS unread FROM articles a" + w + " ORDER BY a.found DESC, a.pmid DESC LIMIT " + limit + " OFFSET " + offset
+        "SELECT a.pmid, a.title, a.authors, a.journal, a.year, a.pubdate, a.volume, a.issue, a.pages, a.doi, a.ptypes, a.own, a.found, " +
+        UNREAD + " AS unread, " + SAVED + " AS saved, " +
+        "(SELECT group_concat(t.topic) FROM article_topics t WHERE t.pmid = a.pmid) AS topics " +
+        "FROM articles a" + w + " ORDER BY " + order + " LIMIT " + limit + " OFFSET " + offset
       ).bind(...args),
       env.DB.prepare("SELECT COUNT(*) AS n, ?1 AS a, ?2 AS b FROM articles a" + w).bind(...args),
-      env.DB.prepare("SELECT COUNT(*) AS n FROM articles a WHERE " + UNREAD).bind(cut, reader),
+      env.DB.prepare(
+        "SELECT (SELECT COUNT(*) FROM articles a WHERE " + TOPIC + " AND " + UNREAD + ") AS unread, " +
+        "(SELECT COUNT(*) FROM articles a WHERE " + UNREAD + ") AS unread_all, " +
+        "(SELECT COUNT(*) FROM articles a WHERE " + TOPIC + " AND " + SAVED + ") AS saved, " +
+        "(SELECT COUNT(*) FROM articles a WHERE " + TOPIC + " AND a.own = 1) AS own"
+      ).bind(cut, reader, topic),
       env.DB.prepare("SELECT key, value FROM article_meta"),
     ]);
     const m = {};
     for (const r of meta.results) m[r.key] = r.value;
+    const c = counts.results[0];
     return json({
-      items: items.results.map((r) => ({ ...r, unread: !!r.unread })),
+      items: items.results.map((r) => ({ ...r, own: !!r.own, unread: !!r.unread, saved: !!r.saved, topics: r.topics ? r.topics.split(",") : [] })),
       total: total.results[0].n,
-      unread: unread.results[0].n,
+      unread: c.unread, unreadAll: c.unread_all, saved: c.saved, own: c.own,
+      topics: TOPICS.map((t) => ({ id: t.id, label: t.label })),
       canMark: viewer.admin,
       updated: m.last_ok || "",
       error: m.last_error || "",
     });
   }
 
-  // The search in use, plus the feedback named viewers left on it.
+  // The searches in use, plus the feedback named viewers left on them.
   if (path === "/api/articles/search" && req.method === "GET") {
     let feedback = [];
     if (viewer.admin) {
       feedback = (await env.DB.prepare("SELECT id, author, text, created_at FROM article_feedback ORDER BY created_at DESC, id DESC LIMIT 200").all()).results;
     }
-    return json({ term: SEARCH_TERM, version: SEARCH_VERSION, topic: TOPIC, canComment: viewer.admin, feedback });
+    return json({ topics: TOPICS, version: SEARCH_VERSION, canComment: viewer.admin, feedback });
   }
 
   if (!viewer.admin) return json({ error: "forbidden" }, 403);
@@ -189,21 +260,24 @@ export async function articlesApi(req, env, viewer, path, json) {
   }
 
   if (path === "/api/articles/read-all" && req.method === "POST") {
+    const topic = TOPIC_IDS.includes(new URL(req.url).searchParams.get("topic")) ? new URL(req.url).searchParams.get("topic") : "";
     await env.DB.prepare(
-      "INSERT OR IGNORE INTO article_reads (pmid, reader, read_at) SELECT a.pmid, ?2, ?3 FROM articles a WHERE " + UNREAD
-    ).bind(cut, reader, now).run();
+      "INSERT OR IGNORE INTO article_reads (pmid, reader, read_at) SELECT a.pmid, ?2, ?4 FROM articles a WHERE " + TOPIC + " AND " + UNREAD
+    ).bind(cut, reader, topic, now).run();
     return json({ ok: true });
   }
 
   if (path === "/api/articles/refresh" && req.method === "POST") return json(await ingest(env));
 
-  const m = /^\/api\/articles\/(\d{1,9})\/read$/.exec(path);
-  if (m && req.method === "PUT") {
-    await env.DB.prepare("INSERT OR IGNORE INTO article_reads (pmid, reader, read_at) VALUES (?1, ?2, ?3)").bind(Number(m[1]), reader, now).run();
-    return json({ ok: true });
-  }
-  if (m && req.method === "DELETE") {
-    await env.DB.prepare("DELETE FROM article_reads WHERE pmid = ?1 AND reader = ?2").bind(Number(m[1]), reader).run();
+  const m = /^\/api\/articles\/(\d{1,9})\/(read|star)$/.exec(path);
+  if (m && (req.method === "PUT" || req.method === "DELETE")) {
+    const table = m[2] === "read" ? "article_reads" : "article_stars";
+    const col = m[2] === "read" ? "read_at" : "starred_at";
+    if (req.method === "PUT") {
+      await env.DB.prepare("INSERT OR IGNORE INTO " + table + " (pmid, reader, " + col + ") VALUES (?1, ?2, ?3)").bind(Number(m[1]), reader, now).run();
+    } else {
+      await env.DB.prepare("DELETE FROM " + table + " WHERE pmid = ?1 AND reader = ?2").bind(Number(m[1]), reader).run();
+    }
     return json({ ok: true });
   }
   return json({ error: "not_found" }, 404);

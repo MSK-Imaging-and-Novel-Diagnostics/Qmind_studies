@@ -66,7 +66,7 @@ function corsHeaders(req, env) {
   const allowed = String(env.ALLOWED_ORIGINS || "*").split(",").map((s) => s.trim()).filter(Boolean);
   const h = {
     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Authorization, Content-Type",
+    "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Base-Updated",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin",
   };
@@ -125,6 +125,12 @@ export default {
       const row = await env.DB.prepare("SELECT data FROM docs WHERE col = ?1 AND id = ?2").bind(col, id).first();
       return row ? JSON.parse(row.data) : null;
     };
+    // A dialog sends the version it opened with; refuse the save if someone else changed the document since.
+    const base = req.headers.get("X-Base-Updated");
+    if (base && (req.method === "PUT" || req.method === "PATCH")) {
+      const current = await load();
+      if (current && String(current.updatedAt || "") !== base) return json({ error: "conflict" }, 409);
+    }
 
     if (req.method === "PUT") {
       const b = await readDoc(req);

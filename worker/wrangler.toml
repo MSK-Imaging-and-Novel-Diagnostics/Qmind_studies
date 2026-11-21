@@ -2,6 +2,10 @@ name = "qmind-api"
 main = "src/index.js"
 compatibility_date = "2026-11-01"
 
+# Nightly PubMed search for the Related articles page, 02:15 UTC.
+[triggers]
+crons = ["15 2 * * *"]
+
 [vars]
 # Comma-separated list of sites that may call this API, e.g. "https://<user>.github.io". "*" allows any site.
 ALLOWED_ORIGINS = "https://msk-imaging-and-novel-diagnostics.github.io"

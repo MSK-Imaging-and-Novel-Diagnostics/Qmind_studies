@@ -3,6 +3,8 @@
 // DASHBOARD_PASSWORD gives anonymous access: everything except who applied for a question.
 // ADMIN_PASSWORDS (comma-separated, each ending in _FirstnameLastname) also shows the applicants.
 
+import { articlesApi, ingest } from "./articles.js";
+
 const COLLECTIONS = ["projects", "questions", "supervisors", "activity"];
 const ID = /^[A-Za-z0-9_-]{1,64}$/;
 const MAX_BODY = 512 * 1024;
@@ -63,7 +65,7 @@ function corsHeaders(req, env) {
   const origin = req.headers.get("Origin") || "";
   const allowed = String(env.ALLOWED_ORIGINS || "*").split(",").map((s) => s.trim()).filter(Boolean);
   const h = {
-    "Access-Control-Allow-Methods": "GET, PUT, PATCH, DELETE, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Authorization, Content-Type",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin",
@@ -83,6 +85,11 @@ async function readDoc(req) {
 }
 
 export default {
+  // Nightly search for new related articles (see [triggers] in wrangler.toml).
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(ingest(env));
+  },
+
   async fetch(req, env) {
     const cors = corsHeaders(req, env);
     const json = (body, status = 200) =>
@@ -104,6 +111,8 @@ export default {
       for (const r of results) if (data[r.col]) data[r.col][r.id] = redact(r.col, JSON.parse(r.data), viewer);
       return json({ data, viewer });
     }
+
+    if (path === "/api/articles" || path.startsWith("/api/articles/")) return articlesApi(req, env, viewer, path, json);
 
     const m = /^\/api\/docs\/([a-z]+)\/([^/]+)$/.exec(path);
     if (!m) return json({ error: "not_found" }, 404);

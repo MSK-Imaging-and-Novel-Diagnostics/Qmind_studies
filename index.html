@@ -136,6 +136,8 @@ input[type="text"], input[type="search"], input[type="password"], input[type="da
 }
 textarea { resize: vertical; min-height: 60px; }
 select.inline { width: auto; padding: 4px 8px; font-size: 13px; }
+input.inline { width: min(240px, 100%); padding: 4px 8px; font-size: 13px; }
+a.tbtn { text-decoration: none; }
 
 /* View */
 .view { display: flex; flex-direction: column; gap: 28px; min-width: 0; }
@@ -446,7 +448,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
   var PRIO = { high: "High", medium: "Medium", low: "Low" };
   var PRANK = { high: 0, medium: 1, "": 2, low: 3 };
   var EFFORT = { S: "Small", M: "Medium", L: "Large" };
-  var VIEWS = { overview: "Overview", open: "Open questions", outcomes: "Outcomes", people: "People", activity: "Activity" };
+  var VIEWS = { overview: "Overview", open: "Open questions", outcomes: "Outcomes", people: "People", activity: "Activity", articles: "Related articles" };
   var state = {
     db: null, user: null, sample: null, downloads: null, uid: null, myName: "",
     phase: "loading", projects: [], questions: [], sups: [], activity: {}, names: {},
@@ -554,7 +556,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     var d = supDoc(name), cap = d && d.capacity != null && d.capacity !== "" ? Number(d.capacity) : null;
     return { c: c, cap: cap, full: cap != null && c.toegewezen >= cap };
   }
-  function go(view) { state.view = view; state.query = ""; $("search").value = ""; state.filter = "alle"; state.tag = ""; remember("qmind-view", view); render(); }
+  function go(view) { if (view === "articles") loadArticles(); state.view = view; state.query = ""; $("search").value = ""; state.filter = "alle"; state.tag = ""; remember("qmind-view", view); render(); }
 
   // ---------- Render ----------
   function render() {
@@ -564,7 +566,8 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     var openN = countBy(liveQs()).open;
     Object.keys(VIEWS).forEach(function (v) {
       nav.append(h("button", { type: "button", "class": "navitem", "aria-current": state.view === v && !state.query ? "page" : null, onclick: function () { go(v); } },
-        h("span", { text: VIEWS[v] }), v === "open" && ready ? h("span", { "class": "n", text: String(openN) }) : null));
+        h("span", { text: VIEWS[v] }), v === "open" && ready ? h("span", { "class": "n", text: String(openN) }) : null,
+        v === "articles" && art.unread ? h("span", { "class": "n", text: String(art.unread) }) : null));
     });
     nav.append(h("span", { "class": "navhead", text: "Projects" }));
     state.projects.forEach(function (p) {
@@ -590,6 +593,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     else if (state.view === "outcomes") d.append(viewOutcomes());
     else if (state.view === "people") d.append(viewPeople());
     else if (state.view === "activity") d.append(viewActivity());
+    else if (state.view === "articles") d.append(viewArticles());
     else d.append(viewProject(projectById(state.view)));
   }
   function view(title, right) {
@@ -694,6 +698,55 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     return qs.filter(function (q) {
       return (!withStatus || state.filter === "alle" || statusOf(q) === state.filter) && (!state.tag || arr(q.tags).indexOf(state.tag) !== -1);
     });
+  }
+
+  // ---------- Related articles (nightly PubMed search, stored in the database) ----------
+  var art = { items: [], total: 0, unread: 0, filter: "unread", q: "", canMark: false, loading: false, loaded: false, failed: false, error: "", seq: 0 };
+  function loadArticles(more) {
+    var seq = ++art.seq, offset = more ? art.items.length : 0;
+    art.loading = true; if (state.view === "articles") render();
+    call("GET", "/api/articles?filter=" + art.filter + "&q=" + encodeURIComponent(art.q) + "&offset=" + offset + "&limit=50").then(function (r) {
+      if (seq !== art.seq) return;
+      art.items = more ? art.items.concat(r.items) : r.items;
+      art.total = r.total; art.unread = r.unread; art.canMark = !!r.canMark; art.error = r.error || "";
+      art.loading = false; art.loaded = true; art.failed = false; render();
+    }, function () { if (seq !== art.seq) return; art.loading = false; art.failed = true; render(); });
+  }
+  function markArticle(a, read) {
+    call(read ? "PUT" : "DELETE", "/api/articles/" + a.pmid + "/read").then(function () {
+      a.unread = !read; art.unread = Math.max(0, art.unread + (read ? -1 : 1));
+      if (art.filter === "unread" && read) { art.items = art.items.filter(function (x) { return x !== a; }); art.total = Math.max(0, art.total - 1); }
+      render();
+    }, function () { state.flash = "Save failed. Try again."; render(); });
+  }
+  function viewArticles() {
+    var newLabel = art.canMark ? "Unread" : "New";
+    var filters = h("div", { "class": "filters" }, [["unread", newLabel + " " + art.unread], ["all", "All"]].map(function (f) {
+      return h("button", { type: "button", "class": "filter", "aria-pressed": String(art.filter === f[0]), onclick: function () { art.filter = f[0]; loadArticles(); } }, f[1]);
+    }));
+    var input = h("input", { type: "search", "class": "inline", placeholder: "Search articles", "aria-label": "Search articles", value: art.q });
+    var form = h("form", { "class": "filters", onsubmit: function (ev) { ev.preventDefault(); art.q = input.value.trim(); loadArticles(); } }, input);
+    var right = art.canMark && art.unread && art.filter === "unread" && !art.q ? tbtn("Mark all as read", function () {
+      call("POST", "/api/articles/read-all").then(function () { loadArticles(); }, function () { state.flash = "Save failed. Try again."; render(); });
+    }) : null;
+    var list;
+    if (!art.loaded) list = h("p", { "class": "empty", text: art.failed ? "Can't load the articles." : "Loading…" });
+    else if (!art.items.length) list = h("p", { "class": "empty", text: art.q ? "No articles match." : art.filter === "unread" ? "Nothing new." : "No articles yet." });
+    else list = h("div", { "class": "rows" }, art.items.map(function (a) {
+      var cite = [a.journal, a.year, a.volume ? a.volume + (a.issue ? "(" + a.issue + ")" : "") : "", a.pages].filter(Boolean).join("  ·  ");
+      return h("article", { "class": "row" + (a.unread ? "" : " afgerond") },
+        h("span", { "class": "title" }, h("a", { href: "https://pubmed.ncbi.nlm.nih.gov/" + a.pmid + "/", target: "_blank", rel: "noopener noreferrer", text: a.title || "Untitled" })),
+        h("p", { "class": "meta", text: a.authors || "" }),
+        h("p", { "class": "meta", text: cite }),
+        h("div", { "class": "acts" },
+          a.doi ? h("a", { "class": "tbtn", href: "https://doi.org/" + a.doi, target: "_blank", rel: "noopener noreferrer", text: "Full text" }) : null,
+          art.canMark && a.unread ? tbtn("Mark as read", function () { markArticle(a, true); }) : null,
+          art.canMark && !a.unread && daysSince(a.found) < 7 ? tbtn("Mark as unread", function () { markArticle(a, false); }) : null));
+    }));
+    var more = art.loaded && art.items.length < art.total ? h("div", null, h("button", { type: "button", "class": "btn", disabled: art.loading, onclick: function () { loadArticles(true); } }, "Show more")) : null;
+    return view("Related articles", right, h("div", { "class": "sechead" }, filters, form),
+      art.loaded ? h("p", { "class": "muted small", text: plural(art.total, "article", "articles") + (art.error ? "  ·  Last update failed" : "") }) : null,
+      list, more);
   }
 
   function viewOpen() {
@@ -1475,6 +1528,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     var wanted = recall("qmind-view");
     if (wanted && (VIEWS[wanted] || projectById(wanted))) state.view = wanted;
     state.phase = "ready"; ready = true; render();
+    loadArticles();
     setInterval(refresh, 20000);
     document.addEventListener("visibilitychange", refresh);
   }

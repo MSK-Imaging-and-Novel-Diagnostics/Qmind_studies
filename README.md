@@ -70,6 +70,19 @@ npx wrangler secret put ADMIN_PASSWORDS
 
 After a change, everyone has to enter their new password the next time they open the page.
 
+## Related articles
+
+The Related articles page lists PubMed articles found by a search that runs inside the Worker every night at 02:15 UTC (`[triggers]` in `wrangler.toml`).
+
+- **Search**: `SEARCH_TERM` in `worker/src/articles.js`. Currently body composition on MRI or CT (subcutaneous, visceral, intramuscular and intermuscular fat and related terms), humans only. Raise `SEARCH_VERSION` when you change it.
+- **Nightly run**: asks PubMed for everything added in the last 30 days, and stores the articles that are not in the `articles` table yet. No abstracts are stored.
+- **Unread**: an article is unread for 7 days after it was found. People with a personal password can mark it as read sooner; this is stored per person in `article_reads`. With the shared password the same list is shown as "New", without read marks.
+- **Status**: `article_meta` holds the time of the last successful run and the last error. The page shows "Last update failed" when the last run went wrong.
+- **Run it now**: `POST /api/articles/refresh` with a personal password.
+- **Fill from scratch or after changing the search**: `node tools/backfill_articles.mjs out.sql`, then in `worker/`: `npx wrangler d1 execute qmind --remote --file ../out.sql`. This fetches all years and takes about half an hour.
+
+Optional: set an `NCBI_API_KEY` secret to raise PubMed's rate limit. It is not needed for the nightly run.
+
 ## Testing locally
 
 Create `worker/.dev.vars` with `DASHBOARD_PASSWORD=something` and `ADMIN_PASSWORDS=something_TestUser`, then in `worker/`:

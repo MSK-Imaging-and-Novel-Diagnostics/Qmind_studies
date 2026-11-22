@@ -750,7 +750,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     call("GET", "/api/articles?filter=" + art.filter + "&topic=" + encodeURIComponent(art.topic) + "&q=" + encodeURIComponent(art.q) + "&offset=" + offset + "&limit=50").then(function (r) {
       if (seq !== art.seq) return;
       art.items = more ? art.items.concat(r.items) : r.items;
-      art.total = r.total; art.unread = r.unread; art.unreadAll = r.unreadAll; art.saved = r.saved; art.own = r.own; art.topics = arr(r.topics);
+      art.total = r.total; art.more = !!r.more; art.unread = r.unread; art.unreadAll = r.unreadAll; art.saved = r.saved; art.own = r.own; art.topics = arr(r.topics);
       art.canMark = !!r.canMark; art.error = r.error || "";
       art.loading = false; art.loaded = true; art.failed = false; render();
     }, function () { if (seq !== art.seq) return; art.loading = false; art.failed = true; render(); });
@@ -759,14 +759,14 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
   function markArticle(a, read) {
     call(read ? "PUT" : "DELETE", "/api/articles/" + a.pmid + "/read").then(function () {
       a.unread = !read; art.unread = Math.max(0, art.unread + (read ? -1 : 1)); art.unreadAll = Math.max(0, art.unreadAll + (read ? -1 : 1));
-      if (art.filter === "unread" && read) { art.items = art.items.filter(function (x) { return x !== a; }); art.total = Math.max(0, art.total - 1); }
+      if (art.filter === "unread" && read) { art.items = art.items.filter(function (x) { return x !== a; }); if (art.total != null) art.total = Math.max(0, art.total - 1); }
       render();
     }, artFail);
   }
   function starArticle(a, on) {
     call(on ? "PUT" : "DELETE", "/api/articles/" + a.pmid + "/star").then(function () {
       a.saved = on; art.saved = Math.max(0, art.saved + (on ? 1 : -1));
-      if (art.filter === "saved" && !on) { art.items = art.items.filter(function (x) { return x !== a; }); art.total = Math.max(0, art.total - 1); }
+      if (art.filter === "saved" && !on) { art.items = art.items.filter(function (x) { return x !== a; }); if (art.total != null) art.total = Math.max(0, art.total - 1); }
       render();
     }, artFail);
   }
@@ -871,9 +871,9 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
           a.doi ? h("a", { "class": "tbtn", href: "https://doi.org/" + a.doi, target: "_blank", rel: "noopener noreferrer", text: "Full text" }) : null,
           art.canMark && !a.unread && daysSince(a.found) < 7 ? tbtn("Mark as unread", function () { markArticle(a, false); }) : null));
     }));
-    var more = art.loaded && art.items.length < art.total ? h("div", null, h("button", { type: "button", "class": "btn", disabled: art.loading, onclick: function () { loadArticles(true); } }, "Show more")) : null;
+    var more = art.loaded && art.more ? h("div", null, h("button", { type: "button", "class": "btn", disabled: art.loading, onclick: function () { loadArticles(true); } }, "Show more")) : null;
     return view("Related articles", right, h("div", { "class": "sechead" }, filters, form),
-      art.loaded ? h("p", { "class": "muted small", text: plural(art.total, "article", "articles") + (art.error ? "  ·  Last update failed" : "") }) : null,
+      art.loaded && (art.total != null || art.error) ? h("p", { "class": "muted small", text: [art.total != null ? plural(art.total, "article", "articles") : "", art.error ? "Last update failed" : ""].filter(Boolean).join("  ·  ") }) : null,
       list, more);
   }
 
@@ -1668,7 +1668,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     if (wanted && (VIEWS[wanted] || projectById(wanted))) state.view = wanted;
     state.phase = "ready"; ready = true; render();
     loadArticles();
-    setInterval(refresh, 20000);
+    setInterval(refresh, 60000);
     document.addEventListener("visibilitychange", refresh);
   }
 })();

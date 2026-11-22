@@ -57,3 +57,6 @@ CREATE TABLE IF NOT EXISTS article_stars (
   starred_at TEXT NOT NULL,
   PRIMARY KEY (pmid, reader)
 );
+
+CREATE INDEX IF NOT EXISTS articles_own ON articles (found DESC, pmid DESC) WHERE own = 1;
+CREATE INDEX IF NOT EXISTS article_stars_reader ON article_stars (reader, pmid);

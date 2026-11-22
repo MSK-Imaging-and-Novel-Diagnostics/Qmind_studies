@@ -137,6 +137,22 @@ async function setMeta(env, values) {
   await env.DB.batch(Object.entries(values).map(([k, v]) => st.bind(k, String(v))));
 }
 
+// Totals per topic are counted once per run and kept in article_meta, so that opening the page does not scan the table.
+async function refreshCounts(env) {
+  const { results } = await env.DB.prepare(
+    "SELECT t.topic AS topic, COUNT(*) AS total, SUM(a.own) AS own FROM article_topics t JOIN articles a ON a.pmid = t.pmid GROUP BY t.topic"
+  ).all();
+  const all = await env.DB.prepare("SELECT COUNT(*) AS total, SUM(own) AS own FROM articles").first();
+  const values = { "total:": all.total || 0, "own:": all.own || 0 };
+  for (const t of TOPICS) {
+    const r = results.find((x) => x.topic === t.id) || {};
+    values["total:" + t.id] = r.total || 0;
+    values["own:" + t.id] = r.own || 0;
+  }
+  await setMeta(env, values);
+  return values;
+}
+
 // The nightly run: per topic, everything PubMed added in the last 30 days that is not in the table yet.
 export async function ingest(env) {
   const now = new Date().toISOString();
@@ -166,6 +182,7 @@ export async function ingest(env) {
       const part = links.slice(i, i + 45);
       await env.DB.prepare("INSERT OR IGNORE INTO article_topics (pmid, topic) VALUES " + part.map(() => "(?, ?)").join(", ")).bind(...part.flat()).run();
     }
+    if (rows.length || links.length) await refreshCounts(env);
     await setMeta(env, { last_run: now, last_ok: now, last_added: rows.length, last_error: "", search_version: SEARCH_VERSION });
     return { ok: true, searched: ids.length, added: rows.length };
   } catch (e) {
@@ -191,11 +208,16 @@ export async function articlesApi(req, env, viewer, path, json) {
     const q = (u.get("q") || "").trim().slice(0, 100);
     const limit = Math.min(Math.max(parseInt(u.get("limit") || "50", 10) || 0, 0), 100);
     const offset = Math.max(parseInt(u.get("offset") || "0", 10) || 0, 0);
+
+    // Every list starts from a small set or walks an index in display order, so a page costs tens of rows, not the whole table.
+    //   unread: the last week, through the index on found      saved: the reader's own stars
+    //   own:    the partial index on own work                   all:   the index on found, newest first
+    let from = "articles a INDEXED BY articles_found";
     const where = [TOPIC];
     const args = [cut, reader, topic];
     if (filter === "unread") where.push(UNREAD);
-    if (filter === "saved") where.push(SAVED);
-    if (filter === "own") where.push("a.own = 1");
+    if (filter === "saved") { from = "article_stars s JOIN articles a ON a.pmid = s.pmid"; where.push("s.reader = ?2"); }
+    if (filter === "own") { from = "articles a INDEXED BY articles_own"; where.push("a.own = 1"); }
     if (q) {
       args.push("%" + q.replace(/[\\%_]/g, "\\$&") + "%");
       where.push("(a.title LIKE ?4 ESCAPE '\\' OR a.authors LIKE ?4 ESCAPE '\\' OR a.journal LIKE ?4 ESCAPE '\\')");
@@ -203,29 +225,32 @@ export async function articlesApi(req, env, viewer, path, json) {
     const w = " WHERE " + where.join(" AND ");
     // Own work first in the lists people work through; newest first everywhere.
     const order = filter === "unread" || filter === "saved" ? "a.own DESC, a.found DESC, a.pmid DESC" : "a.found DESC, a.pmid DESC";
-    const [items, total, counts, meta] = await env.DB.batch([
+    const [items, counts, meta] = await env.DB.batch([
       env.DB.prepare(
         "SELECT a.pmid, a.title, a.authors, a.journal, a.year, a.pubdate, a.volume, a.issue, a.pages, a.doi, a.ptypes, a.own, a.found, " +
         UNREAD + " AS unread, " + SAVED + " AS saved, " +
         "(SELECT group_concat(t.topic) FROM article_topics t WHERE t.pmid = a.pmid) AS topics " +
-        "FROM articles a" + w + " ORDER BY " + order + " LIMIT " + limit + " OFFSET " + offset
+        "FROM " + from + w + " ORDER BY " + order + " LIMIT " + (limit + 1) + " OFFSET " + offset
       ).bind(...args),
-      env.DB.prepare("SELECT COUNT(*) AS n, ?1 AS a, ?2 AS b FROM articles a" + w).bind(...args),
       env.DB.prepare(
-        "SELECT (SELECT COUNT(*) FROM articles a WHERE " + TOPIC + " AND " + UNREAD + ") AS unread, " +
-        "(SELECT COUNT(*) FROM articles a WHERE " + UNREAD + ") AS unread_all, " +
-        "(SELECT COUNT(*) FROM articles a WHERE " + TOPIC + " AND " + SAVED + ") AS saved, " +
-        "(SELECT COUNT(*) FROM articles a WHERE " + TOPIC + " AND a.own = 1) AS own"
+        "SELECT (SELECT COUNT(*) FROM articles a INDEXED BY articles_found WHERE " + UNREAD + " AND " + TOPIC + ") AS unread, " +
+        "(SELECT COUNT(*) FROM articles a INDEXED BY articles_found WHERE " + UNREAD + ") AS unread_all, " +
+        "(SELECT COUNT(*) FROM article_stars s WHERE s.reader = ?2 AND (?3 = '' OR EXISTS (SELECT 1 FROM article_topics t WHERE t.pmid = s.pmid AND t.topic = ?3))) AS saved"
       ).bind(cut, reader, topic),
       env.DB.prepare("SELECT key, value FROM article_meta"),
     ]);
-    const m = {};
+    let m = {};
     for (const r of meta.results) m[r.key] = r.value;
+    if (m["total:" + topic] == null) m = { ...m, ...(await refreshCounts(env)) };
     const c = counts.results[0];
+    const own = Number(m["own:" + topic]) || 0;
+    const page = items.results.slice(0, limit);
+    // A search has no cheap total; the page then only knows whether there is more.
+    const total = q ? null : filter === "unread" ? c.unread : filter === "saved" ? c.saved : filter === "own" ? own : Number(m["total:" + topic]) || 0;
     return json({
-      items: items.results.map((r) => ({ ...r, own: !!r.own, unread: !!r.unread, saved: !!r.saved, topics: r.topics ? r.topics.split(",") : [] })),
-      total: total.results[0].n,
-      unread: c.unread, unreadAll: c.unread_all, saved: c.saved, own: c.own,
+      items: page.map((r) => ({ ...r, own: !!r.own, unread: !!r.unread, saved: !!r.saved, topics: r.topics ? r.topics.split(",") : [] })),
+      total, more: items.results.length > limit,
+      unread: c.unread, unreadAll: c.unread_all, saved: c.saved, own,
       topics: TOPICS.map((t) => ({ id: t.id, label: t.label })),
       canMark: viewer.admin,
       updated: m.last_ok || "",

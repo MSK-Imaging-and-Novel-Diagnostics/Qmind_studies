@@ -78,7 +78,7 @@ The Related articles page lists PubMed articles found by searches that run insid
 - **Nightly run**: per topic, asks PubMed for everything added in the last 30 days and stores the articles that are not in the `articles` table yet. No abstracts are stored.
 - **Unread**: an article is unread for 7 days after it was found. People with a personal password can mark it as read sooner (`article_reads`) and keep a reading list (`article_stars`); both are per person. With the shared password the same list is shown as "New", without marks.
 - **Own work**: articles with an author in `OWN_AUTHORS` get a Q-MIND label, come first under Unread and Reading list, and have their own tab.
-- **Linking**: "Link" on an article adds it to the related studies of a project, or to a research question (`refs` on the question).
+- **Linking**: "Link to study" on an article adds it to a project, under Relevant literature (`literature`) or Related studies (`studies`), or to a research question (`refs` on the question).
 - **Feedback on the search**: the "Search string" button shows the searches in use. People with a personal password can leave feedback there; it is stored in `article_feedback` and returned by `GET /api/articles/search`.
 - **Status**: `article_meta` holds the time of the last successful run and the last error. The page shows "Last update failed" when the last run went wrong.
 - **Run it now**: `POST /api/articles/refresh` with a personal password.

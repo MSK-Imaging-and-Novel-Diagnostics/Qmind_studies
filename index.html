@@ -395,7 +395,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
 
 <dialog id="dlg-link" class="narrow" aria-labelledby="dl-h">
   <form class="dbody" id="form-link">
-    <h2 id="dl-h">Link article</h2>
+    <h2 id="dl-h">Link to study</h2>
     <p class="small muted" id="l-title"></p>
     <div class="field"><label for="l-target">Link to</label><select id="l-target" required></select></div>
     <p class="err" id="l-err" hidden></p>
@@ -777,7 +777,9 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     linkArt = a; $("l-title").textContent = a.title || ""; $("l-err").hidden = true;
     var sel = $("l-target"); sel.replaceChildren(h("option", { value: "", text: "Choose…" }));
     state.projects.forEach(function (p) {
-      var g = h("optgroup", { label: p.name || "Untitled" }, h("option", { value: "p:" + p.id, text: "Related studies of " + (p.name || "Untitled") }));
+      var g = h("optgroup", { label: p.name || "Untitled" },
+        h("option", { value: "l:" + p.id, text: "Relevant literature of " + (p.name || "Untitled") }),
+        h("option", { value: "p:" + p.id, text: "Related studies of " + (p.name || "Untitled") }));
       sortQs(state.questions.filter(function (q) { return q.projectId === p.id; })).forEach(function (q) { g.append(h("option", { value: "q:" + q.id, text: clip(q.title, 90) })); });
       sel.append(g);
     });
@@ -790,12 +792,13 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
     var journal = [a.journal, a.volume ? a.volume + (a.issue ? "(" + a.issue + ")" : "") + (a.pages ? ":" + a.pages : "") : ""].filter(Boolean).join(" ");
     var same = function (x) { return x.pmid === a.pmid || x.url === url; };
     submit(ev.currentTarget, "l-err", async function () {
-      if (v.slice(0, 2) === "p:") {
+      if (v.slice(0, 2) === "p:" || v.slice(0, 2) === "l:") {
+        var key = v[0] === "l" ? "literature" : "studies", what = key === "literature" ? "relevant literature" : "related studies";
         var p = projectById(v.slice(2)); if (!p) throw "That project no longer exists.";
-        if (arr(p.studies).some(same)) throw "Already in the related studies of " + (p.name || "this project") + ".";
-        await saveArray(p.id, "studies", function (list) {
+        if (arr(p[key]).some(same)) throw "Already in the " + what + " of " + (p.name || "this project") + ".";
+        await saveArray(p.id, key, function (list) {
           return list.concat([{ id: uid(), pmid: a.pmid, title: a.title, authors: a.authors, journal: journal, year: String(a.year || ""), url: url, note: "" }]);
-        }, "Added related study “" + clip(a.title, 70) + "”");
+        }, "Added " + STUDY_KIND[key] + " “" + clip(a.title, 70) + "”");
       } else {
         var q = questionById(v.slice(2)); if (!q) throw "That question no longer exists.";
         if (arr(q.refs).some(same)) throw "Already linked to this question.";
@@ -867,7 +870,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
         h("div", { "class": "acts" },
           art.canMark && a.unread ? h("button", { type: "button", "class": "btn sm mark", onclick: function () { markArticle(a, true); } }, "✓ Mark as read") : null,
           art.canMark ? tbtn(a.saved ? "★ On reading list" : "☆ Reading list", function () { starArticle(a, !a.saved); }) : null,
-          state.readonly ? null : tbtn("Link", function () { openLink(a); }),
+          state.readonly ? null : tbtn("Link to study", function () { openLink(a); }),
           a.doi ? h("a", { "class": "tbtn", href: "https://doi.org/" + a.doi, target: "_blank", rel: "noopener noreferrer", text: "Full text" }) : null,
           art.canMark && !a.unread && daysSince(a.found) < 7 ? tbtn("Mark as unread", function () { markArticle(a, false); }) : null));
     }));
@@ -973,7 +976,7 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
 
   function viewProject(p) {
     var ro = state.readonly, all = sortQs(questionsOf(p.id));
-    var tabs = h("div", { "class": "subtabs", role: "tablist" }, [["questions", "Questions " + all.length], ["dataset", "Dataset"], ["studies", "Related studies " + arr(p.studies).length]].map(function (t) {
+    var tabs = h("div", { "class": "subtabs", role: "tablist" }, [["questions", "Questions " + all.length], ["dataset", "Dataset"], ["studies", "Related studies " + (arr(p.studies).length + arr(p.literature).length)]].map(function (t) {
       return h("button", { type: "button", "class": "subtab", role: "tab", "aria-selected": String(state.ptab === t[0]), onclick: function () { state.ptab = t[0]; render(); } }, t[1]);
     }));
     var right = ro ? null : [tbtn("Edit", function () { openProject(p); }), tbtn("Delete", function () { askDeleteProject(p.id); }, "danger")];
@@ -1006,17 +1009,21 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
         ro ? null : h("div", null, tbtn("Add text block", function () { openSection(p, null); })));
     }
     if (state.ptab === "studies") {
-      var studies = arr(p.studies).slice().sort(function (a, b) { return String(b.year || "").localeCompare(String(a.year || "")) || String(a.title || "").localeCompare(String(b.title || "")); });
-      return view(p.name || "Untitled", right, tabs, h("div", { "class": "sec" },
-        ro ? null : h("div", { "class": "sechead" }, h("span"), h("button", { type: "button", "class": "btn primary", onclick: function () { openStudy(p, null); } }, "Add study")),
-        studies.length ? h("div", { "class": "rows" }, studies.map(function (s) {
-          var url = linkFor(s.url);
-          return h("article", { "class": "row" },
-            h("span", { "class": "title" }, url ? h("a", { href: url, target: "_blank", rel: "noopener noreferrer", text: s.title || "Untitled" }) : (s.title || "Untitled")),
-            h("p", { "class": "meta", text: [s.authors, s.journal, s.year].filter(Boolean).join("  ·  ") }),
-            s.note ? h("p", { "class": "desc", text: s.note }) : null,
-            ro ? null : h("div", { "class": "acts" }, tbtn("Edit", function () { openStudy(p, s); })));
-        })) : h("p", { "class": "empty", text: "No related studies yet." })));
+      var studyList = function (key, title, addLabel, emptyText) {
+        var items = arr(p[key]).slice().sort(function (a, b) { return String(b.year || "").localeCompare(String(a.year || "")) || String(a.title || "").localeCompare(String(b.title || "")); });
+        return sec(title, ro ? null : h("button", { type: "button", "class": "btn" + (key === "studies" ? " primary" : ""), onclick: function () { openStudy(p, null, key); } }, addLabel),
+          items.length ? h("div", { "class": "rows" }, items.map(function (s) {
+            var url = linkFor(s.url);
+            return h("article", { "class": "row" },
+              h("span", { "class": "title" }, url ? h("a", { href: url, target: "_blank", rel: "noopener noreferrer", text: s.title || "Untitled" }) : (s.title || "Untitled")),
+              h("p", { "class": "meta", text: [s.authors, s.journal, s.year].filter(Boolean).join("  ·  ") }),
+              s.note ? h("p", { "class": "desc", text: s.note }) : null,
+              ro ? null : h("div", { "class": "acts" }, tbtn("Edit", function () { openStudy(p, s, key); })));
+          })) : h("p", { "class": "empty", text: emptyText }));
+      };
+      return view(p.name || "Untitled", right, tabs,
+        studyList("studies", "Related studies", "Add study", "No related studies yet."),
+        studyList("literature", "Relevant literature", "Add article", "No relevant literature yet."));
     }
     var shown = applyFilter(all, true);
     var tools =h("div", { "class": "sechead" }, filterBar(all, true), ro ? null : h("div", { "class": "acts" },
@@ -1178,9 +1185,10 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
 
   // Related study
   var editStudy = null;
-  function openStudy(p, s) {
-    editStudy = { pid: p.id, id: s ? s.id : null };
-    $("dt-h").textContent = s ? "Edit related study" : "Add related study";
+  var STUDY_KIND = { studies: "related study", literature: "relevant article" };
+  function openStudy(p, s, key) {
+    editStudy = { pid: p.id, id: s ? s.id : null, key: key === "literature" ? "literature" : "studies" };
+    $("dt-h").textContent = (s ? "Edit " : "Add ") + STUDY_KIND[editStudy.key];
     $("t-title").value = s ? (s.title || "") : ""; $("t-authors").value = s ? (s.authors || "") : "";
     $("t-journal").value = s ? (s.journal || "") : ""; $("t-year").value = s ? (s.year || "") : "";
     $("t-url").value = s ? (s.url || "") : ""; $("t-note").value = s ? (s.note || "") : "";
@@ -1192,16 +1200,16 @@ dialog::backdrop { background: rgb(4 20 25 / 0.45); }
       year: $("t-year").value.trim(), url: $("t-url").value.trim(), note: $("t-note").value.trim() };
     if (!item.title || !e) return;
     submit(ev.currentTarget, "t-err", function () {
-      return saveArray(e.pid, "studies", function (list) {
+      return saveArray(e.pid, e.key, function (list) {
         if (!e.id) return list.concat([Object.assign({ id: uid() }, item)]);
-        return list.map(function (s) { return s.id === e.id ? Object.assign({ id: s.id }, item) : s; });
-      }, (e.id ? "Updated" : "Added") + " related study “" + clip(item.title, 70) + "”");
+        return list.map(function (s) { return s.id === e.id ? Object.assign({}, s, item) : s; });
+      }, (e.id ? "Updated " : "Added ") + STUDY_KIND[e.key] + " “" + clip(item.title, 70) + "”");
     }, "dlg-study");
   });
   $("t-delete").addEventListener("click", function () {
     var e = editStudy; if (!e || !e.id) return;
     confirmDo("Delete this related study?", async function () {
-      await saveArray(e.pid, "studies", function (list) { return list.filter(function (s) { return s.id !== e.id; }); }, "Deleted a related study");
+      await saveArray(e.pid, e.key, function (list) { return list.filter(function (s) { return s.id !== e.id; }); }, "Deleted a " + STUDY_KIND[e.key]);
       $("dlg-study").close();
     });
   });

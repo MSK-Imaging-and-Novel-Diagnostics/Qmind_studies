@@ -7,7 +7,7 @@ Amsterdam UMC, Department of Radiology and Nuclear Medicine.
 
 | Part | Where | What |
 | --- | --- | --- |
-| Site | `index.html`, `qmind_logo.png`, `qmind_icon.png` | Static page, served by GitHub Pages. Contains no project data and no password. |
+| Site | `index.html`, `assets/images/` | Static page, served by GitHub Pages. Contains no project data and no password. |
 | API | `worker/` | Cloudflare Worker. Checks the password and reads and writes the data. |
 | Data | Cloudflare D1 database `qmind` | One table, `docs`, holding projects, questions, supervisors and the activity log as JSON. |
 
